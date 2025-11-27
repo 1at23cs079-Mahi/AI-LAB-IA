@@ -8,21 +8,23 @@
 </head>
 <body>
     <style>
-        body { background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%); }
-        .problem-container { background: #2d3436; color: white; border-radius: 30px; box-shadow: 0 15px 50px rgba(0, 0, 0, 0.5); }
-        .back-button { background: #00b894; border-radius: 25px; font-weight: bold; }
-        .back-button:hover { background: #00cec9; transform: rotate(-5deg) scale(1.1); }
-        .problem-header { border-bottom: 4px solid #00b894; }
-        .problem-header h1 { color: #00b894; font-family: 'Courier New', monospace; }
-        .problem-header .description { color: #b2bec3; }
-        .controls { background: #353b48; border: 3px solid #00b894; border-radius: 20px; }
-        .controls h3 { color: #00b894; text-transform: uppercase; letter-spacing: 2px; }
-        .btn { background: linear-gradient(135deg, #00b894 0%, #00cec9 100%); border-radius: 25px; text-transform: uppercase; font-weight: bold; }
-        .btn:hover { background: linear-gradient(135deg, #00cec9 0%, #00b894 100%); }
-        .btn-secondary { background: #636e72; border: 2px solid #00b894; }
-        .output { background: #353b48; border: 3px solid #00b894; }
-        #sudokuInput input { background: #2d3436; color: #00b894; border: 3px solid #00b894; font-weight: bold; font-size: 28px !important; }
-        #sudokuInput input:focus { box-shadow: 0 0 20px rgba(0, 184, 148, 0.5); }
+        body { background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); }
+        .problem-container { background: white; color: #424242; border-radius: 20px; box-shadow: 0 4px 20px rgba(76, 175, 80, 0.2); border: 3px solid #4caf50; }
+        .back-button { background: #4caf50; color: white; border-radius: 25px; font-weight: bold; }
+        .back-button:hover { background: #66bb6a; transform: translateY(-2px) scale(1.05); }
+        .problem-header { border-bottom: 4px solid #4caf50; background: linear-gradient(135deg, #f1f8e9 0%, #dcedc8 100%); }
+        .problem-header h1 { color: #2e7d32; font-family: 'Courier New', monospace; }
+        .problem-header .description { color: #616161; }
+        .controls { background: #fafafa; border: 3px solid #4caf50; border-radius: 15px; }
+        .controls h3 { color: #2e7d32; text-transform: uppercase; letter-spacing: 2px; }
+        .controls label { color: #424242; }
+        .btn { background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%); color: white; border-radius: 25px; text-transform: uppercase; font-weight: bold; }
+        .btn:hover { background: linear-gradient(135deg, #66bb6a 0%, #4caf50 100%); transform: scale(1.05); }
+        .btn-secondary { background: #e8f5e9; color: #4caf50; border: 2px solid #4caf50; }
+        .output { background: #fafafa; border: 3px solid #4caf50; color: #424242; }
+        .output h3 { color: #2e7d32; }
+        #sudokuInput input { background: white; color: #2e7d32; border: 3px solid #4caf50; font-weight: bold; font-size: 28px !important; }
+        #sudokuInput input:focus { box-shadow: 0 0 15px rgba(76, 175, 80, 0.3); border-color: #66bb6a; }
     </style>
     <div class="problem-container">
         <a href="index.html" class="back-button">← Back to Home</a>

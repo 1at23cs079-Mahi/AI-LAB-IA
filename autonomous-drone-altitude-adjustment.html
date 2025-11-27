@@ -8,20 +8,22 @@
 </head>
 <body>
     <style>
-        body { background: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%); }
-        .problem-container { background: rgba(255, 255, 255, 0.95); border-radius: 30px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4); }
-        .back-button { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: 25px; font-weight: bold; }
-        .back-button:hover { transform: scale(1.1) rotate(-2deg); }
-        .problem-header { border-bottom: 4px dashed #8e2de2; }
-        .problem-header h1 { color: #4a00e0; font-weight: 700; }
-        .controls { background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); border-radius: 20px; border: 3px solid #8e2de2; }
-        .controls h3 { color: #4a00e0; }
-        .control-group label { color: #333; font-weight: 600; }
-        input, select, textarea { background: white !important; color: #333 !important; }
-        .btn { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: 25px; font-weight: bold; text-transform: uppercase; }
-        .btn:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(240, 147, 251, 0.4); }
-        .output { background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%); border-radius: 20px; }
-        canvas { border-radius: 15px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2); }
+        body { background: linear-gradient(135deg, #e1bee7 0%, #ce93d8 100%); }
+        .problem-container { background: white; border-radius: 20px; box-shadow: 0 4px 20px rgba(156, 39, 176, 0.2); border: 3px solid #9c27b0; }
+        .back-button { background: linear-gradient(135deg, #9c27b0 0%, #ba68c8 100%); color: white; border-radius: 25px; font-weight: bold; }
+        .back-button:hover { transform: translateY(-2px) scale(1.05); }
+        .problem-header { border-bottom: 4px solid #9c27b0; background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%); }
+        .problem-header h1 { color: #6a1b9a; font-weight: 700; }
+        .problem-header .description { color: #616161; }
+        .controls { background: #fafafa; border-radius: 15px; border: 2px solid #9c27b0; }
+        .controls h3 { color: #6a1b9a; }
+        .control-group label { color: #424242; font-weight: 600; }
+        input, select, textarea { background: white !important; color: #424242 !important; border: 2px solid #ce93d8 !important; }
+        .btn { background: linear-gradient(135deg, #9c27b0 0%, #ba68c8 100%); color: white; border-radius: 25px; font-weight: bold; text-transform: uppercase; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(156, 39, 176, 0.3); }
+        .btn-secondary { background: #f3e5f5; color: #9c27b0; border: 2px solid #9c27b0; }
+        .output { background: #fafafa; border-radius: 15px; border: 2px solid #9c27b0; }
+        canvas { border-radius: 10px; box-shadow: 0 2px 10px rgba(156, 39, 176, 0.1); background: white; }
     </style>
     <div class="problem-container">
         <a href="index.html" class="back-button">← Back to Home</a>

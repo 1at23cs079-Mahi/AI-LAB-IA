@@ -8,28 +8,30 @@
 </head>
 <body>
     <style>
-        body { background: linear-gradient(135deg, #ff0000 0%, #8b0000 100%); animation: pulse 2s ease-in-out infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.9; } }
-        @keyframes collisionPulse { 0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(255, 255, 0, 0.8); } 50% { transform: scale(1.1); box-shadow: 0 0 40px rgba(255, 255, 0, 1); } }
-        .problem-container { background: #1a0000; color: #ffcccc; border: 4px solid #ff4444; box-shadow: 0 0 40px rgba(255, 68, 68, 0.6); }
-        .back-button { background: #ff4444; color: white; border-radius: 30px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
-        .back-button:hover { background: #ff0000; box-shadow: 0 0 20px rgba(255, 68, 68, 0.8); }
-        .problem-header { border-bottom: 3px solid #ff4444; background: linear-gradient(135deg, #330000 0%, #1a0000 100%); }
-        .problem-header h1 { color: #ff6666; text-shadow: 0 0 10px rgba(255, 102, 102, 0.5); }
-        .problem-header p { color: #ffcccc !important; }
-        .controls { background: #330000; border: 2px solid #ff4444; }
-        .controls h3 { color: #ffeeee !important; text-shadow: 0 0 5px rgba(255, 238, 238, 0.5); }
-        .controls label { color: #ffdddd !important; font-weight: 500; }
-        .controls p { color: #ffcccc !important; }
-        .btn { background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%); text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
-        .btn:hover { transform: scale(1.05); box-shadow: 0 0 20px rgba(255, 0, 0, 0.7); }
-        .btn-secondary { background: #660000; color: #ffeeee !important; border: 2px solid #ff4444; }
-        .output { background: #1a0000; border: 3px solid #ff4444; }
-        .output h3 { color: #ffeeee !important; }
-        .output p, .output div { color: #ffcccc !important; }
-        .cell { background: #330000; border: 1px solid #ff4444; }
-        .cell.fire { background: #ff0000; animation: flicker 0.5s infinite; }
-        @keyframes flicker { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        body { background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); }
+        @keyframes collisionPulse { 0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(255, 152, 0, 0.6); } 50% { transform: scale(1.1); box-shadow: 0 0 30px rgba(255, 152, 0, 0.8); } }
+        .problem-container { background: white; color: #424242; border: 3px solid #ff6f00; box-shadow: 0 4px 20px rgba(255, 111, 0, 0.2); }
+        .back-button { background: #ff6f00; color: white; border-radius: 30px; }
+        .back-button:hover { background: #f57c00; transform: translateY(-2px); }
+        .problem-header { border-bottom: 3px solid #ff6f00; background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); }
+        .problem-header h1 { color: #e65100; }
+        .problem-header p { color: #424242 !important; }
+        .controls { background: #fafafa; border: 2px solid #ff6f00; }
+        .controls h3 { color: #e65100 !important; }
+        .controls label { color: #424242 !important; font-weight: 500; }
+        .controls p { color: #616161 !important; }
+        .btn { background: linear-gradient(135deg, #ff6f00 0%, #f57c00 100%); color: white; }
+        .btn:hover { transform: scale(1.05); box-shadow: 0 4px 15px rgba(255, 111, 0, 0.3); }
+        .btn-secondary { background: #fff3e0; color: #ff6f00 !important; border: 2px solid #ff6f00; }
+        .output { background: #fafafa; border: 3px solid #ff6f00; }
+        .output h3 { color: #e65100 !important; }
+        .output p, .output div { color: #424242 !important; }
+        .cell { background: white; border: 2px solid #ff6f00; color: #424242; }
+        .cell.fire { background: #ff6f00; color: white; animation: flicker 0.5s infinite; }
+        .cell.start, .cell.goal { font-weight: bold; }
+        .cell.obstacle { background: #757575; color: white; }
+        .cell.path { background: #4caf50; color: white; }
+        @keyframes flicker { 0%, 100% { opacity: 1; } 50% { opacity: 0.85; } }
     </style>
     <div class="problem-container">
         <a href="index.html" class="back-button">← Back to Home</a>
