@@ -10,6 +10,7 @@
     <style>
         body { background: linear-gradient(135deg, #ff0000 0%, #8b0000 100%); animation: pulse 2s ease-in-out infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.9; } }
+        @keyframes collisionPulse { 0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(255, 255, 0, 0.8); } 50% { transform: scale(1.1); box-shadow: 0 0 40px rgba(255, 255, 0, 1); } }
         .problem-container { background: #1a0000; color: #ffcccc; border: 4px solid #ff4444; box-shadow: 0 0 40px rgba(255, 68, 68, 0.6); }
         .back-button { background: #ff4444; color: white; border-radius: 30px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
         .back-button:hover { background: #ff0000; box-shadow: 0 0 20px rgba(255, 68, 68, 0.8); }
@@ -423,12 +424,20 @@
                 gridDiv.innerHTML = '';
                 const currentGrid = fireTimeline[step];
                 
+                // Check if current position on path has fire
+                const currentPos = path[step];
+                let pathTouchesFire = false;
+                if (currentPos && currentGrid[currentPos.x][currentPos.y] === 2) {
+                    pathTouchesFire = true;
+                }
+                
                 for (let i = 0; i < SIZE; i++) {
                     for (let j = 0; j < SIZE; j++) {
                         const cell = document.createElement('div');
                         cell.className = 'cell';
                         
                         const onPath = path.some((p, idx) => p.x === i && p.y === j && idx <= step);
+                        const isCurrentPos = currentPos && i === currentPos.x && j === currentPos.y;
                         
                         if (i === start.x && j === start.y) {
                             cell.classList.add('start');
@@ -436,6 +445,13 @@
                         } else if (i === exit.x && j === exit.y) {
                             cell.classList.add('goal');
                             cell.textContent = 'E';
+                        } else if (isCurrentPos && pathTouchesFire) {
+                            // Highlight the collision point
+                            cell.style.background = '#ff0000';
+                            cell.style.border = '3px solid yellow';
+                            cell.style.animation = 'collisionPulse 0.5s infinite';
+                            cell.textContent = '💥';
+                            cell.title = 'Path blocked by fire!';
                         } else if (onPath) {
                             cell.classList.add('path');
                             cell.textContent = '✓';
@@ -451,8 +467,24 @@
                     }
                 }
                 
-                animationContainer.innerHTML = `<h4>Time: ${step} minutes</h4>`;
+                const statusMsg = pathTouchesFire ? 
+                    `<strong style="color: #ff4444;">⚠️ PATH BLOCKED! Fire reached the escape route at ${step} minutes</strong>` :
+                    `Time: ${step} minutes`;
+                animationContainer.innerHTML = `<h4>${statusMsg}</h4>`;
                 animationContainer.appendChild(gridDiv);
+                
+                // Stop animation if path touches fire
+                if (pathTouchesFire) {
+                    clearInterval(animationInterval);
+                    resultContent.innerHTML = `
+                        <div class="alert" style="background: #ff4444; color: white;">
+                            ⚠️ Escape Failed! Fire blocked the path at ${step} minutes. 
+                            The route was safe when calculated, but fire spread faster than expected.
+                        </div>
+                    `;
+                    return;
+                }
+                
                 step++;
             }, 800);
         }
