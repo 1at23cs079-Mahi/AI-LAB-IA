@@ -8,23 +8,25 @@
 </head>
 <body>
     <style>
-        body { background: #141414; }
-        .problem-container { background: linear-gradient(135deg, #1a1a1a 0%, #2d0a0a 100%); color: #e5e5e5; border: 2px solid #e50914; box-shadow: 0 0 60px rgba(229, 9, 20, 0.4); }
-        .back-button { background: #e50914; color: white; border-radius: 5px; font-weight: 700; text-transform: uppercase; }
-        .back-button:hover { background: #ff1a1a; }
-        .problem-header { border-bottom: 3px solid #e50914; background: linear-gradient(135deg, #2d0a0a 0%, #1a1a1a 100%); }
-        .problem-header h1 { color: #e50914; font-weight: 700; }
-        .controls { background: #1a1a1a; border: 2px solid #e50914; }
-        .controls h3 { color: #e50914; }
-        .controls label { color: #b3b3b3; }
-        .btn { background: #e50914; color: white; border-radius: 5px; font-weight: 600; text-transform: uppercase; }
-        .btn:hover { background: #ff1a1a; }
-        .btn-secondary { background: #333333; border: 2px solid #e50914; }
-        input[type="text"], input[type="number"], select { background: #333333; color: #e5e5e5; border: 1px solid #e50914; }
-        .output { background: #1a1a1a; border: 2px solid #e50914; color: #e5e5e5; }
-        table { background: #2d0a0a; }
-        thead { background: #e50914; }
-        tr:hover { background: rgba(229, 9, 20, 0.1); }
+        body { background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%); }
+        .problem-container { background: white; color: #424242; border: 3px solid #00acc1; box-shadow: 0 4px 20px rgba(0, 172, 193, 0.2); }
+        .back-button { background: #00acc1; color: white; border-radius: 8px; font-weight: bold; }
+        .back-button:hover { background: #00bcd4; transform: translateY(-2px); }
+        .problem-header { border-bottom: 4px solid #00acc1; background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%); }
+        .problem-header h1 { color: #00acc1; font-weight: 700; }
+        .problem-header .description { color: #616161; }
+        .controls { background: #fafafa; border: 2px solid #00acc1; }
+        .controls h3 { color: #00acc1; text-transform: uppercase; }
+        .controls label { color: #424242; font-weight: 500; }
+        .btn { background: #00acc1; color: white; border-radius: 8px; font-weight: 600; }
+        .btn:hover { background: #00bcd4; transform: scale(1.05); }
+        .btn-secondary { background: #b2ebf2; color: #00acc1; border: 2px solid #00acc1; }
+        input[type="text"], input[type="number"], select { background: white; color: #424242; border: 2px solid #00acc1; border-radius: 5px; }
+        input[type="checkbox"] { accent-color: #00acc1; }
+        .output { background: #fafafa; border: 3px solid #00acc1; color: #424242; }
+        table { background: white; }
+        thead { background: #00acc1; color: white; }
+        tr:hover { background: #e0f7fa; }
     </style>
     <div class="problem-container">
         <a href="batch-b3.html" class="back-button">← Back to Batch B3</a>
