@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Problem 3: Smart Calendar Conflict Resolver</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <style>
+        body { background: #f0f4f0; }
+        .problem-container { background: white; border-left: 8px solid #2ecc71; box-shadow: 0 5px 30px rgba(46, 204, 113, 0.2); }
+        .back-button { background: #2ecc71; border-radius: 5px; font-weight: 600; letter-spacing: 1px; }
+        .back-button:hover { background: #27ae60; transform: translateX(-8px); }
+        .problem-header { border-bottom: 2px solid #2ecc71; background: #f0f9f4; margin: -40px -40px 30px -40px; padding: 40px; }
+        .problem-header h1 { color: #27ae60; font-weight: 300; }
+        .controls { background: #f0f9f4; border-left: 4px solid #2ecc71; border-radius: 0; }
+        .controls h3 { color: #27ae60; font-weight: 300; text-transform: uppercase; letter-spacing: 2px; font-size: 0.9rem; }
+        .btn { background: #2ecc71; border-radius: 3px; font-weight: 600; letter-spacing: 0.5px; }
+        .btn:hover { background: #27ae60; }
+        .btn-secondary { background: white; color: #2ecc71; border: 2px solid #2ecc71; }
+        .output { background: white; border-left: 4px solid #2ecc71; }
+        table { border-collapse: separate; border-spacing: 0; }
+        table th { background: #2ecc71; }
+    </style>
+    <div class="problem-container">
+        <a href="index.html" class="back-button">← Back to Home</a>
+        
+        <div class="problem-header">
+            <h1>📅 Problem 3: Smart Calendar Conflict Resolver</h1>
+            <p class="description">
+                Detect scheduling conflicts and resolve them using minimum conflict heuristic to produce a non-overlapping daily schedule.
+            </p>
+        </div>
+
+        <div class="controls">
+            <h3>Add Tasks</h3>
+            <div class="control-group">
+                <label>Task Name:</label>
+                <input type="text" id="taskName" placeholder="e.g., Team Meeting">
+            </div>
+            <div class="control-group">
+                <label>Start Time (24h format, e.g., 09:00):</label>
+                <input type="time" id="startTime" value="09:00">
+            </div>
+            <div class="control-group">
+                <label>End Time:</label>
+                <input type="time" id="endTime" value="10:00">
+            </div>
+            <div class="control-group">
+                <label>Priority (1-5, 5=highest):</label>
+                <input type="number" id="priority" min="1" max="5" value="3">
+            </div>
+            <button class="btn" onclick="addTask()">Add Task</button>
+            <button class="btn btn-secondary" onclick="loadSampleTasks()">Load Sample Schedule</button>
+            <button class="btn btn-secondary" onclick="clearTasks()">Clear All</button>
+        </div>
+
+        <div id="taskList" class="output" style="display:none;">
+            <h3>Current Tasks</h3>
+            <table id="tasksTable">
+                <tr>
+                    <th>Task</th>
+                    <th>Start</th>
+                    <th>End</th>
+                    <th>Priority</th>
+                    <th>Action</th>
+                </tr>
+            </table>
+            <button class="btn" onclick="resolveConflicts()" style="margin-top: 15px;">Resolve Conflicts</button>
+        </div>
+
+        <div id="output" class="output" style="display:none;">
+            <h3>Resolved Schedule</h3>
+            <div id="resultContent"></div>
+            <div class="visualization">
+                <div id="timeline"></div>
+            </div>
+            <div class="stats" id="stats"></div>
+        </div>
+    </div>
+
+    <script>
+        let tasks = [];
+
+        function timeToMinutes(time) {
+            const [hours, minutes] = time.split(':').map(Number);
+            return hours * 60 + minutes;
+        }
+
+        function minutesToTime(minutes) {
+            const hours = Math.floor(minutes / 60);
+            const mins = minutes % 60;
+            return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+        }
+
+        function addTask() {
+            const name = document.getElementById('taskName').value;
+            const start = document.getElementById('startTime').value;
+            const end = document.getElementById('endTime').value;
+            const priority = parseInt(document.getElementById('priority').value);
+
+            if (!name || !start || !end) {
+                alert('Please fill all fields');
+                return;
+            }
+
+            if (timeToMinutes(start) >= timeToMinutes(end)) {
+                alert('End time must be after start time');
+                return;
+            }
+
+            tasks.push({
+                id: Date.now(),
+                name,
+                start,
+                end,
+                priority,
+                startMins: timeToMinutes(start),
+                endMins: timeToMinutes(end)
+            });
+
+            document.getElementById('taskName').value = '';
+            updateTaskList();
+        }
+
+        function loadSampleTasks() {
+            tasks = [
+                {id: 1, name: 'Team Meeting', start: '09:00', end: '10:00', priority: 4, startMins: 540, endMins: 600},
+                {id: 2, name: 'Code Review', start: '09:30', end: '10:30', priority: 3, startMins: 570, endMins: 630},
+                {id: 3, name: 'Lunch Break', start: '12:00', end: '13:00', priority: 5, startMins: 720, endMins: 780},
+                {id: 4, name: 'Client Call', start: '14:00', end: '15:00', priority: 5, startMins: 840, endMins: 900},
+                {id: 5, name: 'Design Discussion', start: '14:30', end: '15:30', priority: 2, startMins: 870, endMins: 930},
+                {id: 6, name: 'Email Time', start: '15:00', end: '15:30', priority: 1, startMins: 900, endMins: 930},
+                {id: 7, name: 'Project Planning', start: '10:00', end: '11:00', priority: 3, startMins: 600, endMins: 660}
+            ];
+            updateTaskList();
+        }
+
+        function clearTasks() {
+            tasks = [];
+            updateTaskList();
+            document.getElementById('output').style.display = 'none';
+        }
+
+        function removeTask(id) {
+            tasks = tasks.filter(t => t.id !== id);
+            updateTaskList();
+        }
+
+        function updateTaskList() {
+            const taskList = document.getElementById('taskList');
+            const table = document.getElementById('tasksTable');
+            
+            if (tasks.length === 0) {
+                taskList.style.display = 'none';
+                return;
+            }
+
+            taskList.style.display = 'block';
+            
+            let html = `
+                <tr>
+                    <th>Task</th>
+                    <th>Start</th>
+                    <th>End</th>
+                    <th>Priority</th>
+                    <th>Action</th>
+                </tr>
+            `;
+
+            tasks.forEach(task => {
+                html += `
+                    <tr>
+                        <td>${task.name}</td>
+                        <td>${task.start}</td>
+                        <td>${task.end}</td>
+                        <td>${'⭐'.repeat(task.priority)}</td>
+                        <td><button class="btn" style="padding: 5px 10px; font-size: 0.8rem;" onclick="removeTask(${task.id})">Remove</button></td>
+                    </tr>
+                `;
+            });
+
+            table.innerHTML = html;
+        }
+
+        function detectConflicts() {
+            const conflicts = [];
+            for (let i = 0; i < tasks.length; i++) {
+                for (let j = i + 1; j < tasks.length; j++) {
+                    const t1 = tasks[i];
+                    const t2 = tasks[j];
+                    
+                    if (!(t1.endMins <= t2.startMins || t2.endMins <= t1.startMins)) {
+                        conflicts.push([t1, t2]);
+                    }
+                }
+            }
+            return conflicts;
+        }
+
+        function resolveConflicts() {
+            const conflicts = detectConflicts();
+            
+            if (conflicts.length === 0) {
+                showResults(tasks, [], 'No conflicts detected!');
+                return;
+            }
+
+            // Minimum conflict heuristic: Keep higher priority tasks
+            const removed = [];
+            const conflictSet = new Set();
+            
+            conflicts.forEach(([t1, t2]) => {
+                if (t1.priority > t2.priority) {
+                    conflictSet.add(t2.id);
+                } else if (t2.priority > t1.priority) {
+                    conflictSet.add(t1.id);
+                } else {
+                    // Same priority, remove the one that conflicts with more tasks
+                    const t1Conflicts = conflicts.filter(c => c.includes(t1)).length;
+                    const t2Conflicts = conflicts.filter(c => c.includes(t2)).length;
+                    if (t1Conflicts > t2Conflicts) {
+                        conflictSet.add(t1.id);
+                    } else {
+                        conflictSet.add(t2.id);
+                    }
+                }
+            });
+
+            const resolved = tasks.filter(t => !conflictSet.has(t.id));
+            const removedTasks = tasks.filter(t => conflictSet.has(t.id));
+            
+            showResults(resolved, removedTasks, `Resolved ${conflicts.length} conflicts`);
+        }
+
+        function showResults(resolved, removed, message) {
+            const output = document.getElementById('output');
+            const resultContent = document.getElementById('resultContent');
+            const timeline = document.getElementById('timeline');
+            const stats = document.getElementById('stats');
+            
+            output.style.display = 'block';
+            
+            resultContent.innerHTML = `
+                <div class="alert alert-success">
+                    ✓ ${message}
+                </div>
+                ${removed.length > 0 ? `
+                    <div class="alert alert-warning">
+                        Removed ${removed.length} task(s): ${removed.map(t => t.name).join(', ')}
+                    </div>
+                ` : ''}
+            `;
+
+            // Draw timeline
+            const sorted = [...resolved].sort((a, b) => a.startMins - b.startMins);
+            let timelineHtml = '<div style="background: white; padding: 20px; border-radius: 8px;">';
+            
+            sorted.forEach(task => {
+                const duration = task.endMins - task.startMins;
+                const color = `hsl(${task.priority * 60}, 70%, 60%)`;
+                timelineHtml += `
+                    <div style="background: ${color}; color: white; padding: 10px; margin: 5px 0; border-radius: 5px;">
+                        <strong>${task.name}</strong> | ${task.start} - ${task.end} | Priority: ${task.priority} | Duration: ${duration}min
+                    </div>
+                `;
+            });
+            
+            timelineHtml += '</div>';
+            timeline.innerHTML = timelineHtml;
+
+            const totalTime = resolved.reduce((sum, t) => sum + (t.endMins - t.startMins), 0);
+            const avgPriority = (resolved.reduce((sum, t) => sum + t.priority, 0) / resolved.length).toFixed(1);
+
+            stats.innerHTML = `
+                <div class="stat-card">
+                    <div class="label">Tasks Scheduled</div>
+                    <div class="value">${resolved.length}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Tasks Removed</div>
+                    <div class="value">${removed.length}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Total Time</div>
+                    <div class="value">${Math.floor(totalTime / 60)}h ${totalTime % 60}m</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Avg Priority</div>
+                    <div class="value">${avgPriority}</div>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Problem 11: Medical Triage System</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <style>
+        body { background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); }
+        .problem-container { background: white; border-top: 6px solid #0277bd; box-shadow: 0 10px 40px rgba(2, 119, 189, 0.15); }
+        .back-button { background: #0277bd; border-radius: 50px; padding: 10px 25px; }
+        .back-button:hover { background: #01579b; }
+        .problem-header { border-bottom: 3px solid #0277bd; background: linear-gradient(135deg, #e1f5ff 0%, #b3e5fc 100%); margin: -40px -40px 30px -40px; padding: 40px; }
+        .problem-header h1 { color: #01579b; }
+        .controls { background: #f1f8fb; border: 2px solid #0277bd; }
+        .controls h3 { color: #0277bd; }
+        .controls label { color: #01579b; }
+        .btn { background: linear-gradient(135deg, #0288d1 0%, #0277bd 100%); border-radius: 50px; }
+        .btn:hover { background: linear-gradient(135deg, #0277bd 0%, #01579b 100%); }
+        .btn-secondary { background: white; color: #0277bd; border: 2px solid #0277bd; }
+        input[type="checkbox"] { accent-color: #0277bd; }
+        .output { background: white; border: 2px solid #0277bd; }
+    </style>
+    <div class="problem-container">
+        <a href="index.html" class="back-button">← Back to Home</a>
+        
+        <div class="problem-header">
+            <h1>🏥 Problem 11: Basic Medical Triage Rule Engine</h1>
+            <p class="description">
+                Forward chaining medical triage system to classify patients into Low, Medium, or Critical priority (Educational purposes only).
+            </p>
+        </div>
+
+        <div class="controls">
+            <h3>Patient Symptoms</h3>
+            <div class="control-group">
+                <label>Select Symptoms:</label>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                    <label><input type="checkbox" id="fever" value="fever"> Fever</label>
+                    <label><input type="checkbox" id="chest_pain" value="chest_pain"> Chest Pain</label>
+                    <label><input type="checkbox" id="difficulty_breathing" value="difficulty_breathing"> Difficulty Breathing</label>
+                    <label><input type="checkbox" id="severe_bleeding" value="severe_bleeding"> Severe Bleeding</label>
+                    <label><input type="checkbox" id="unconscious" value="unconscious"> Unconscious</label>
+                    <label><input type="checkbox" id="dehydration" value="dehydration"> Dehydration</label>
+                    <label><input type="checkbox" id="headache" value="headache"> Headache</label>
+                    <label><input type="checkbox" id="nausea" value="nausea"> Nausea</label>
+                    <label><input type="checkbox" id="dizziness" value="dizziness"> Dizziness</label>
+                    <label><input type="checkbox" id="cough" value="cough"> Cough</label>
+                </div>
+            </div>
+            <button class="btn" onclick="triagePatient()">Triage Patient</button>
+            <button class="btn btn-secondary" onclick="clearSymptoms()">Clear Symptoms</button>
+            <button class="btn btn-secondary" onclick="loadSampleCase(1)">Sample Case 1</button>
+            <button class="btn btn-secondary" onclick="loadSampleCase(2)">Sample Case 2</button>
+            <button class="btn btn-secondary" onclick="loadSampleCase(3)">Sample Case 3</button>
+        </div>
+
+        <div id="output" class="output" style="display:none;">
+            <h3>Triage Result</h3>
+            <div id="resultContent"></div>
+            <div id="rulesContent"></div>
+        </div>
+    </div>
+
+    <script>
+        const rules = [
+            {
+                name: "Critical - Unconscious",
+                condition: (s) => s.has('unconscious'),
+                priority: "Critical",
+                action: "Immediate emergency response required"
+            },
+            {
+                name: "Critical - Severe Bleeding",
+                condition: (s) => s.has('severe_bleeding'),
+                priority: "Critical",
+                action: "Stop bleeding immediately, emergency surgery may be needed"
+            },
+            {
+                name: "Critical - Chest Pain + Breathing",
+                condition: (s) => s.has('chest_pain') && s.has('difficulty_breathing'),
+                priority: "Critical",
+                action: "Possible heart attack or pulmonary emergency"
+            },
+            {
+                name: "Medium - Chest Pain",
+                condition: (s) => s.has('chest_pain') && !s.has('difficulty_breathing'),
+                priority: "Medium Priority",
+                action: "Monitor cardiac symptoms, prepare for tests"
+            },
+            {
+                name: "Medium - Difficulty Breathing",
+                condition: (s) => s.has('difficulty_breathing') && !s.has('chest_pain'),
+                priority: "Medium Priority",
+                action: "Respiratory assessment needed"
+            },
+            {
+                name: "Medium - Dehydration + Fever",
+                condition: (s) => s.has('dehydration') && s.has('fever'),
+                priority: "Medium Priority",
+                action: "IV fluids and fever management"
+            },
+            {
+                name: "Low - Fever alone",
+                condition: (s) => s.has('fever') && s.size === 1,
+                priority: "Low Priority",
+                action: "Monitor temperature, provide fluids"
+            },
+            {
+                name: "Low - Minor Symptoms",
+                condition: (s) => (s.has('headache') || s.has('cough') || s.has('nausea')) && s.size <= 2,
+                priority: "Low Priority",
+                action: "Basic treatment, monitor symptoms"
+            },
+            {
+                name: "Low - Dizziness",
+                condition: (s) => s.has('dizziness') && s.size <= 2,
+                priority: "Low Priority",
+                action: "Rest and observation"
+            }
+        ];
+
+        function getSelectedSymptoms() {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            const symptoms = new Set();
+            checkboxes.forEach(cb => {
+                if (cb.checked) symptoms.add(cb.value);
+            });
+            return symptoms;
+        }
+
+        function triagePatient() {
+            const symptoms = getSelectedSymptoms();
+
+            if (symptoms.size === 0) {
+                alert('Please select at least one symptom');
+                return;
+            }
+
+            const matchedRules = [];
+            let finalPriority = "Low Priority";
+
+            for (const rule of rules) {
+                if (rule.condition(symptoms)) {
+                    matchedRules.push(rule);
+                    if (rule.priority === "Critical") {
+                        finalPriority = "Critical";
+                    } else if (rule.priority === "Medium Priority" && finalPriority !== "Critical") {
+                        finalPriority = "Medium Priority";
+                    }
+                }
+            }
+
+            if (matchedRules.length === 0) {
+                matchedRules.push({
+                    name: "Default - Unknown Symptoms",
+                    priority: "Medium Priority",
+                    action: "General medical evaluation needed"
+                });
+                finalPriority = "Medium Priority";
+            }
+
+            displayResults(symptoms, matchedRules, finalPriority);
+        }
+
+        function displayResults(symptoms, matchedRules, priority) {
+            const output = document.getElementById('output');
+            const resultContent = document.getElementById('resultContent');
+            const rulesContent = document.getElementById('rulesContent');
+
+            output.style.display = 'block';
+
+            const priorityColors = {
+                "Critical": {bg: "#f8d7da", border: "#dc3545", color: "#721c24"},
+                "Medium Priority": {bg: "#fff3cd", border: "#ffc107", color: "#856404"},
+                "Low Priority": {bg: "#d4edda", border: "#28a745", color: "#155724"}
+            };
+
+            const colors = priorityColors[priority];
+
+            resultContent.innerHTML = `
+                <div style="background: ${colors.bg}; border-left: 5px solid ${colors.border}; padding: 20px; border-radius: 8px;">
+                    <h2 style="color: ${colors.color}; margin-bottom: 10px;">
+                        Priority: ${priority}
+                    </h2>
+                    <p style="color: ${colors.color}; font-size: 1.1rem;">
+                        <strong>Symptoms Reported:</strong> ${Array.from(symptoms).map(s => s.replace('_', ' ')).join(', ')}
+                    </p>
+                </div>
+            `;
+
+            rulesContent.innerHTML = `
+                <h4 style="margin-top: 25px;">Rules Matched (Forward Chaining)</h4>
+                <table>
+                    <tr>
+                        <th>Rule Name</th>
+                        <th>Priority</th>
+                        <th>Recommended Action</th>
+                    </tr>
+                    ${matchedRules.map(rule => `
+                        <tr>
+                            <td><strong>${rule.name}</strong></td>
+                            <td>${rule.priority}</td>
+                            <td>${rule.action}</td>
+                        </tr>
+                    `).join('')}
+                </table>
+                <div class="alert alert-warning" style="margin-top: 20px;">
+                    ⚠️ This is an educational simulation only. Always seek professional medical advice for real health concerns.
+                </div>
+            `;
+        }
+
+        function clearSymptoms() {
+            document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+            document.getElementById('output').style.display = 'none';
+        }
+
+        function loadSampleCase(caseNum) {
+            clearSymptoms();
+            const cases = {
+                1: ['chest_pain', 'difficulty_breathing', 'dizziness'],
+                2: ['fever', 'dehydration', 'headache'],
+                3: ['cough', 'headache']
+            };
+            cases[caseNum].forEach(symptom => {
+                document.getElementById(symptom).checked = true;
+            });
+            triagePatient();
+        }
+    </script>
+</body>
+</html>

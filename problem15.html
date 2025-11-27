@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Problem 15: Product Review Summarizer</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <style>
+        body { background: linear-gradient(135deg, #f5e6d3 0%, #d9c5a3 100%); }
+        .problem-container { background: #fffbf0; border: 4px solid #8b7355; box-shadow: 0 15px 40px rgba(139, 115, 85, 0.3); }
+        .back-button { background: linear-gradient(135deg, #8b7355 0%, #654321 100%); color: #fffbf0; border-radius: 5px; font-weight: 600; }
+        .back-button:hover { background: linear-gradient(135deg, #654321 0%, #8b7355 100%); }
+        .problem-header { border-bottom: 4px solid #8b7355; background: linear-gradient(135deg, #f5e6d3 0%, #e8d4b8 100%); }
+        .problem-header h1 { color: #5d4e37; font-family: Georgia, serif; }
+        .problem-header .description { color: #6f5a3d; }
+        .controls { background: #faf5ed; border: 3px solid #c9a870; }
+        .controls h3 { color: #5d4e37; font-family: Georgia, serif; }
+        .btn { background: linear-gradient(135deg, #c9a870 0%, #8b7355 100%); color: #fffbf0; border-radius: 5px; font-weight: 600; }
+        .btn:hover { background: linear-gradient(135deg, #d4af37 0%, #c9a870 100%); }
+        textarea { background: #fffbf0; border: 2px solid #c9a870; color: #4a3c2a; }
+        .output { background: #fffbf0; border: 3px solid #8b7355; color: #4a3c2a; font-family: Georgia, serif; }
+    </style>
+    <div class="problem-container">
+        <a href="index.html" class="back-button">← Back to Home</a>
+        
+        <div class="problem-header">
+            <h1>⭐ Problem 15: Product Review Summarizer</h1>
+            <p class="description">
+                Extract common pros and cons from product reviews and generate a summary.
+            </p>
+        </div>
+
+        <div class="controls">
+            <h3>Add Reviews</h3>
+            <div class="control-group">
+                <label>Enter Review:</label>
+                <textarea id="reviewInput" placeholder="Type a product review..."></textarea>
+            </div>
+            <button class="btn" onclick="addReview()">Add Review</button>
+            <button class="btn btn-secondary" onclick="loadSampleReviews()">Load Sample Reviews</button>
+            <button class="btn btn-secondary" onclick="clearReviews()">Clear All</button>
+        </div>
+
+        <div id="reviewsList" class="output" style="display:none;">
+            <h3>Reviews</h3>
+            <div id="reviewsDisplay"></div>
+            <button class="btn" onclick="summarizeReviews()" style="margin-top: 15px;">Generate Summary</button>
+        </div>
+
+        <div id="output" class="output" style="display:none;">
+            <h3>Review Summary</h3>
+            <div id="resultContent"></div>
+        </div>
+    </div>
+
+    <script>
+        let reviews = [];
+
+        const prosKeywords = ['good', 'great', 'excellent', 'amazing', 'love', 'perfect', 'quality', 'fast', 'easy', 'comfortable', 'durable', 'reliable', 'value', 'worth', 'recommend'];
+        const consKeywords = ['bad', 'poor', 'terrible', 'disappointing', 'waste', 'expensive', 'cheap', 'broken', 'difficult', 'slow', 'uncomfortable', 'fragile', 'issue', 'problem', 'defect'];
+
+        function addReview() {
+            const text = document.getElementById('reviewInput').value.trim();
+            if (!text) {
+                alert('Please enter a review');
+                return;
+            }
+
+            reviews.push({id: Date.now(), text});
+            document.getElementById('reviewInput').value = '';
+            updateReviewsList();
+        }
+
+        function loadSampleReviews() {
+            reviews = [
+                "Great product! Fast shipping and excellent quality. Highly recommend.",
+                "Love it! Perfect size and very comfortable to use. Worth every penny.",
+                "Good value for money. The quality is amazing and it's very durable.",
+                "Disappointing. The product broke after two weeks. Poor quality.",
+                "Terrible experience. It's too expensive for such cheap materials.",
+                "Fast delivery but the item has some defects. Uncomfortable to use.",
+                "Excellent! Easy to set up and works perfectly. Great purchase.",
+                "Not worth it. Difficult to use and has multiple issues.",
+                "Amazing quality! Very reliable and comfortable. Highly recommend.",
+                "Good product overall, but a bit expensive. Fast shipping though.",
+                "Love the design! Easy to use and very durable. Great value.",
+                "Poor packaging. The item arrived broken. Very disappointing.",
+                "Perfect! Exceeded my expectations. Comfortable and high quality.",
+                "Waste of money. Cheap materials and terrible customer service.",
+                "Great buy! Fast delivery, excellent quality, and very comfortable.",
+                "Good product but had some issues with setup. Quality is okay.",
+                "Love it! Perfect for my needs. Reliable and great value.",
+                "Disappointing quality. Broke within a month. Not worth the price.",
+                "Excellent product! Easy to use and very durable. Highly recommend.",
+                "Fast shipping and good quality. A bit expensive but worth it."
+            ].map((text, i) => ({id: i, text}));
+            updateReviewsList();
+        }
+
+        function clearReviews() {
+            reviews = [];
+            updateReviewsList();
+            document.getElementById('output').style.display = 'none';
+        }
+
+        function updateReviewsList() {
+            const reviewsList = document.getElementById('reviewsList');
+            const reviewsDisplay = document.getElementById('reviewsDisplay');
+
+            if (reviews.length === 0) {
+                reviewsList.style.display = 'none';
+                return;
+            }
+
+            reviewsList.style.display = 'block';
+
+            reviewsDisplay.innerHTML = `
+                <div style="max-height: 300px; overflow-y: auto;">
+                    ${reviews.map((review, i) => `
+                        <div style="background: white; padding: 12px; margin: 8px 0; border-radius: 6px; border-left: 3px solid #667eea;">
+                            <small style="color: #999;">Review ${i + 1}</small>
+                            <p style="margin: 5px 0 0 0;">${review.text}</p>
+                        </div>
+                    `).join('')}
+                </div>
+                <p style="margin-top: 15px; color: #666;">Total Reviews: ${reviews.length}</p>
+            `;
+        }
+
+        function extractInsights(reviews) {
+            const allText = reviews.map(r => r.text.toLowerCase()).join(' ');
+            const words = allText.split(/\W+/);
+
+            const prosCount = {};
+            const consCount = {};
+
+            prosKeywords.forEach(keyword => {
+                const count = words.filter(w => w === keyword).length;
+                if (count > 0) prosCount[keyword] = count;
+            });
+
+            consKeywords.forEach(keyword => {
+                const count = words.filter(w => w === keyword).length;
+                if (count > 0) consCount[keyword] = count;
+            });
+
+            return {prosCount, consCount};
+        }
+
+        function summarizeReviews() {
+            if (reviews.length === 0) return;
+
+            const {prosCount, consCount} = extractInsights(reviews);
+
+            const topPros = Object.entries(prosCount)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5);
+
+            const topCons = Object.entries(consCount)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5);
+
+            const totalPositive = Object.values(prosCount).reduce((a, b) => a + b, 0);
+            const totalNegative = Object.values(consCount).reduce((a, b) => a + b, 0);
+
+            const sentiment = totalPositive > totalNegative ? 'Positive' : totalNegative > totalPositive ? 'Negative' : 'Mixed';
+
+            displaySummary(topPros, topCons, sentiment, totalPositive, totalNegative);
+        }
+
+        function displaySummary(pros, cons, sentiment, totalPositive, totalNegative) {
+            const output = document.getElementById('output');
+            const resultContent = document.getElementById('resultContent');
+
+            output.style.display = 'block';
+
+            const sentimentColors = {
+                'Positive': {bg: '#d4edda', color: '#155724'},
+                'Negative': {bg: '#f8d7da', color: '#721c24'},
+                'Mixed': {bg: '#fff3cd', color: '#856404'}
+            };
+
+            const colors = sentimentColors[sentiment];
+
+            // Generate summary
+            const summary = `Based on ${reviews.length} reviews, customers ${sentiment === 'Positive' ? 'generally have positive feedback' : sentiment === 'Negative' ? 'express concerns' : 'have mixed opinions'}. Common praise includes ${pros.slice(0, 3).map(p => p[0]).join(', ')}${cons.length > 0 ? `, while issues mentioned involve ${cons.slice(0, 2).map(c => c[0]).join(' and ')}` : ''}.`;
+
+            resultContent.innerHTML = `
+                <div style="background: ${colors.bg}; border-left: 5px solid ${colors.color}; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                    <h3 style="color: ${colors.color}; margin-bottom: 15px;">Overall Sentiment: ${sentiment}</h3>
+                    <p style="color: ${colors.color}; font-size: 1.1rem; line-height: 1.6;">
+                        ${summary}
+                    </p>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-top: 25px;">
+                    <div style="background: #d4edda; padding: 20px; border-radius: 10px;">
+                        <h4 style="color: #155724; margin-bottom: 15px;">👍 Common Pros</h4>
+                        ${pros.length > 0 ? `
+                            <ul style="list-style: none; padding: 0;">
+                                ${pros.map(([word, count]) => `
+                                    <li style="margin: 10px 0; padding: 10px; background: white; border-radius: 5px;">
+                                        <strong>${word}</strong>
+                                        <div style="background: #28a745; height: 8px; border-radius: 4px; width: ${(count / Math.max(...pros.map(p => p[1]))) * 100}%; margin-top: 5px;"></div>
+                                        <small style="color: #666;">Mentioned ${count} times</small>
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        ` : '<p>No clear pros identified</p>'}
+                    </div>
+
+                    <div style="background: #f8d7da; padding: 20px; border-radius: 10px;">
+                        <h4 style="color: #721c24; margin-bottom: 15px;">👎 Common Cons</h4>
+                        ${cons.length > 0 ? `
+                            <ul style="list-style: none; padding: 0;">
+                                ${cons.map(([word, count]) => `
+                                    <li style="margin: 10px 0; padding: 10px; background: white; border-radius: 5px;">
+                                        <strong>${word}</strong>
+                                        <div style="background: #dc3545; height: 8px; border-radius: 4px; width: ${(count / Math.max(...cons.map(c => c[1]))) * 100}%; margin-top: 5px;"></div>
+                                        <small style="color: #666;">Mentioned ${count} times</small>
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        ` : '<p>No clear cons identified</p>'}
+                    </div>
+                </div>
+
+                <div class="stats" style="margin-top: 25px;">
+                    <div class="stat-card" style="border-left-color: #28a745;">
+                        <div class="label">Positive Keywords</div>
+                        <div class="value">${totalPositive}</div>
+                    </div>
+                    <div class="stat-card" style="border-left-color: #dc3545;">
+                        <div class="label">Negative Keywords</div>
+                        <div class="value">${totalNegative}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">Total Reviews</div>
+                        <div class="value">${reviews.length}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">Sentiment Ratio</div>
+                        <div class="value">${totalNegative > 0 ? (totalPositive / totalNegative).toFixed(1) : '∞'}</div>
+                    </div>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

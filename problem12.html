@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Problem 12: Weather Insight Bot</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <style>
+        body { background: linear-gradient(180deg, #4facfe 0%, #00f2fe 100%); }
+        .problem-container { background: rgba(255, 255, 255, 0.95); border-radius: 30px; backdrop-filter: blur(10px); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2); }
+        .back-button { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border-radius: 30px; font-weight: bold; color: white; }
+        .back-button:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(79, 172, 254, 0.4); }
+        .problem-header { border-bottom: 4px solid #4facfe; background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); margin: -40px -40px 30px -40px; padding: 40px; border-radius: 30px 30px 0 0; }
+        .problem-header h1 { color: #0277bd; }
+        .controls { background: linear-gradient(135deg, #ffffff 0%, #f0f8ff 100%); border: 3px solid #4facfe; border-radius: 20px; }
+        .controls h3 { color: #0277bd; }
+        .btn { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border-radius: 25px; font-weight: bold; color: white; }
+        .btn:hover { background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%); transform: scale(1.05); }
+        .btn-secondary { background: white; color: #4facfe; border: 3px solid #4facfe; }
+        .output { background: linear-gradient(135deg, #f0f8ff 0%, #e3f2fd 100%); border: 3px solid #4facfe; border-radius: 20px; }
+        select { border: 2px solid #4facfe; border-radius: 10px; }
+    </style>
+    <div class="problem-container">
+        <a href="index.html" class="back-button">← Back to Home</a>
+        
+        <div class="problem-header">
+            <h1>🌤️ Problem 12: Real-Time Weather Insight Bot</h1>
+            <p class="description">
+                Compare weather data for three cities and answer questions about temperature, humidity, and outdoor activity suitability.
+            </p>
+        </div>
+
+        <div class="controls">
+            <h3>Weather Data (Simulated)</h3>
+            <p style="color: #666; margin-bottom: 15px;">Note: Using simulated weather data. In production, this would use real weather APIs.</p>
+            
+            <button class="btn" onclick="generateWeatherData()">Generate Weather Data</button>
+            <button class="btn btn-secondary" onclick="refreshData()">Refresh Data</button>
+        </div>
+
+        <div id="weatherDisplay" class="output" style="display:none;">
+            <h3>Current Weather Conditions</h3>
+            <div id="weatherCards"></div>
+        </div>
+
+        <div id="chatInterface" style="display:none;">
+            <h3>Chat with Weather Bot</h3>
+            <div class="control-group">
+                <label>Ask a question:</label>
+                <select id="questionSelect" onchange="askQuestion()">
+                    <option value="">-- Select a question --</option>
+                    <option value="hottest">Which city is hottest right now?</option>
+                    <option value="coldest">Which city is coldest right now?</option>
+                    <option value="outdoor">Which city is suitable for outdoor activity?</option>
+                    <option value="humid">Which city has the highest humidity?</option>
+                    <option value="comparison">Compare all cities</option>
+                </select>
+            </div>
+            <div id="botResponse" class="output" style="display:none;"></div>
+        </div>
+    </div>
+
+    <script>
+        let weatherData = [];
+        const cities = ['New York', 'London', 'Tokyo'];
+
+        function generateWeatherData() {
+            weatherData = cities.map(city => ({
+                city,
+                temperature: Math.floor(Math.random() * 40) - 5, // -5 to 35°C
+                humidity: Math.floor(Math.random() * 60) + 30, // 30% to 90%
+                windSpeed: Math.floor(Math.random() * 30) + 5, // 5 to 35 km/h
+                condition: ['Sunny', 'Cloudy', 'Rainy', 'Partly Cloudy'][Math.floor(Math.random() * 4)]
+            }));
+
+            displayWeatherData();
+            document.getElementById('chatInterface').style.display = 'block';
+        }
+
+        function displayWeatherData() {
+            const weatherDisplay = document.getElementById('weatherDisplay');
+            const weatherCards = document.getElementById('weatherCards');
+
+            weatherDisplay.style.display = 'block';
+
+            const conditionEmoji = {
+                'Sunny': '☀️',
+                'Cloudy': '☁️',
+                'Rainy': '🌧️',
+                'Partly Cloudy': '⛅'
+            };
+
+            weatherCards.innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 20px;">
+                    ${weatherData.map(data => `
+                        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.2);">
+                            <h3 style="font-size: 1.8rem; margin-bottom: 15px;">${data.city}</h3>
+                            <div style="font-size: 3rem; margin: 15px 0;">${conditionEmoji[data.condition]}</div>
+                            <p style="font-size: 1.1rem; margin: 8px 0;"><strong>Condition:</strong> ${data.condition}</p>
+                            <p style="font-size: 2rem; font-weight: bold; margin: 10px 0;">${data.temperature}°C</p>
+                            <p style="font-size: 1rem; margin: 5px 0;">💧 Humidity: ${data.humidity}%</p>
+                            <p style="font-size: 1rem; margin: 5px 0;">💨 Wind: ${data.windSpeed} km/h</p>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function askQuestion() {
+            const question = document.getElementById('questionSelect').value;
+            if (!question) return;
+
+            let response = '';
+
+            switch(question) {
+                case 'hottest':
+                    const hottest = weatherData.reduce((max, city) => 
+                        city.temperature > max.temperature ? city : max
+                    );
+                    response = `
+                        <h3>🔥 Hottest City</h3>
+                        <p><strong>${hottest.city}</strong> is the hottest right now with <strong>${hottest.temperature}°C</strong></p>
+                        <p>Condition: ${hottest.condition} | Humidity: ${hottest.humidity}% | Wind: ${hottest.windSpeed} km/h</p>
+                    `;
+                    break;
+
+                case 'coldest':
+                    const coldest = weatherData.reduce((min, city) => 
+                        city.temperature < min.temperature ? city : min
+                    );
+                    response = `
+                        <h3>❄️ Coldest City</h3>
+                        <p><strong>${coldest.city}</strong> is the coldest right now with <strong>${coldest.temperature}°C</strong></p>
+                        <p>Condition: ${coldest.condition} | Humidity: ${coldest.humidity}% | Wind: ${coldest.windSpeed} km/h</p>
+                    `;
+                    break;
+
+                case 'outdoor':
+                    const suitable = weatherData.filter(city => 
+                        city.temperature >= 15 && city.temperature <= 28 &&
+                        city.condition !== 'Rainy' &&
+                        city.windSpeed < 25
+                    );
+                    if (suitable.length > 0) {
+                        response = `
+                            <h3>🏃 Suitable for Outdoor Activity</h3>
+                            ${suitable.map(city => `
+                                <div style="background: #d4edda; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #28a745;">
+                                    <p><strong>${city.city}</strong> - ${city.temperature}°C, ${city.condition}</p>
+                                    <p style="color: #155724;">✓ Temperature comfortable (15-28°C)</p>
+                                    <p style="color: #155724;">✓ No rain</p>
+                                    <p style="color: #155724;">✓ Wind speed acceptable (${city.windSpeed} km/h)</p>
+                                </div>
+                            `).join('')}
+                        `;
+                    } else {
+                        response = `
+                            <h3>🏃 Suitable for Outdoor Activity</h3>
+                            <div class="alert alert-warning">
+                                No cities meet the ideal outdoor activity conditions right now.
+                                (Criteria: 15-28°C, no rain, wind < 25 km/h)
+                            </div>
+                        `;
+                    }
+                    break;
+
+                case 'humid':
+                    const mostHumid = weatherData.reduce((max, city) => 
+                        city.humidity > max.humidity ? city : max
+                    );
+                    response = `
+                        <h3>💧 Highest Humidity</h3>
+                        <p><strong>${mostHumid.city}</strong> has the highest humidity at <strong>${mostHumid.humidity}%</strong></p>
+                        <p>Temperature: ${mostHumid.temperature}°C | Condition: ${mostHumid.condition}</p>
+                    `;
+                    break;
+
+                case 'comparison':
+                    const sorted = [...weatherData].sort((a, b) => b.temperature - a.temperature);
+                    response = `
+                        <h3>📊 City Comparison</h3>
+                        <table>
+                            <tr>
+                                <th>City</th>
+                                <th>Temperature</th>
+                                <th>Humidity</th>
+                                <th>Wind Speed</th>
+                                <th>Condition</th>
+                            </tr>
+                            ${sorted.map(city => `
+                                <tr>
+                                    <td><strong>${city.city}</strong></td>
+                                    <td>${city.temperature}°C</td>
+                                    <td>${city.humidity}%</td>
+                                    <td>${city.windSpeed} km/h</td>
+                                    <td>${city.condition}</td>
+                                </tr>
+                            `).join('')}
+                        </table>
+                    `;
+                    break;
+            }
+
+            const botResponse = document.getElementById('botResponse');
+            botResponse.style.display = 'block';
+            botResponse.innerHTML = `
+                <div class="alert alert-success">
+                    ${response}
+                </div>
+            `;
+        }
+
+        function refreshData() {
+            generateWeatherData();
+            document.getElementById('botResponse').style.display = 'none';
+            document.getElementById('questionSelect').value = '';
+        }
+    </script>
+</body>
+</html>

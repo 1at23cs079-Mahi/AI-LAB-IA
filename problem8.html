@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Problem 8: Sudoku Mini-Solver</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <style>
+        body { background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%); }
+        .problem-container { background: #2d3436; color: white; border-radius: 30px; box-shadow: 0 15px 50px rgba(0, 0, 0, 0.5); }
+        .back-button { background: #00b894; border-radius: 25px; font-weight: bold; }
+        .back-button:hover { background: #00cec9; transform: rotate(-5deg) scale(1.1); }
+        .problem-header { border-bottom: 4px solid #00b894; }
+        .problem-header h1 { color: #00b894; font-family: 'Courier New', monospace; }
+        .problem-header .description { color: #b2bec3; }
+        .controls { background: #353b48; border: 3px solid #00b894; border-radius: 20px; }
+        .controls h3 { color: #00b894; text-transform: uppercase; letter-spacing: 2px; }
+        .btn { background: linear-gradient(135deg, #00b894 0%, #00cec9 100%); border-radius: 25px; text-transform: uppercase; font-weight: bold; }
+        .btn:hover { background: linear-gradient(135deg, #00cec9 0%, #00b894 100%); }
+        .btn-secondary { background: #636e72; border: 2px solid #00b894; }
+        .output { background: #353b48; border: 3px solid #00b894; }
+        #sudokuInput input { background: #2d3436; color: #00b894; border: 3px solid #00b894; font-weight: bold; font-size: 28px !important; }
+        #sudokuInput input:focus { box-shadow: 0 0 20px rgba(0, 184, 148, 0.5); }
+    </style>
+    <div class="problem-container">
+        <a href="index.html" class="back-button">← Back to Home</a>
+        
+        <div class="problem-header">
+            <h1>🔢 Problem 8: Sudoku Mini-Solver (4×4)</h1>
+            <p class="description">
+                Backtracking solver for 4×4 Sudoku with digits 1-4 and row/column/box constraints.
+            </p>
+        </div>
+
+        <div class="controls">
+            <h3>Sudoku Puzzle</h3>
+            <div class="control-group">
+                <label>Enter puzzle (0 for empty cells):</label>
+                <div id="sudokuInput" style="display: inline-grid; grid-template-columns: repeat(4, 60px); gap: 5px; background: #333; padding: 5px;">
+                </div>
+            </div>
+            <button class="btn" onclick="solveSudoku()">Solve Puzzle</button>
+            <button class="btn btn-secondary" onclick="loadSamplePuzzle()">Load Sample</button>
+            <button class="btn btn-secondary" onclick="clearPuzzle()">Clear</button>
+        </div>
+
+        <div id="output" class="output" style="display:none;">
+            <h3>Solution</h3>
+            <div id="resultContent"></div>
+            <div class="visualization">
+                <div id="solutionGrid"></div>
+            </div>
+            <div class="stats" id="stats"></div>
+        </div>
+    </div>
+
+    <script>
+        let puzzle = Array(4).fill(null).map(() => Array(4).fill(0));
+
+        function renderInput() {
+            const container = document.getElementById('sudokuInput');
+            container.innerHTML = '';
+            
+            for (let i = 0; i < 4; i++) {
+                for (let j = 0; j < 4; j++) {
+                    const input = document.createElement('input');
+                    input.type = 'number';
+                    input.min = '0';
+                    input.max = '4';
+                    input.value = puzzle[i][j] || '';
+                    input.style.width = '60px';
+                    input.style.height = '60px';
+                    input.style.textAlign = 'center';
+                    input.style.fontSize = '24px';
+                    input.style.border = '2px solid #667eea';
+                    input.style.borderRadius = '5px';
+                    input.onchange = (e) => {
+                        const val = parseInt(e.target.value) || 0;
+                        puzzle[i][j] = val >= 0 && val <= 4 ? val : 0;
+                    };
+                    container.appendChild(input);
+                }
+            }
+        }
+
+        function isValid(board, row, col, num) {
+            // Check row
+            for (let x = 0; x < 4; x++) {
+                if (board[row][x] === num) return false;
+            }
+            
+            // Check column
+            for (let x = 0; x < 4; x++) {
+                if (board[x][col] === num) return false;
+            }
+            
+            // Check 2x2 box
+            const startRow = Math.floor(row / 2) * 2;
+            const startCol = Math.floor(col / 2) * 2;
+            for (let i = 0; i < 2; i++) {
+                for (let j = 0; j < 2; j++) {
+                    if (board[startRow + i][startCol + j] === num) return false;
+                }
+            }
+            
+            return true;
+        }
+
+        function solve(board, steps) {
+            for (let i = 0; i < 4; i++) {
+                for (let j = 0; j < 4; j++) {
+                    if (board[i][j] === 0) {
+                        for (let num = 1; num <= 4; num++) {
+                            steps.count++;
+                            if (isValid(board, i, j, num)) {
+                                board[i][j] = num;
+                                if (solve(board, steps)) return true;
+                                board[i][j] = 0; // Backtrack
+                            }
+                        }
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        function solveSudoku() {
+            const board = puzzle.map(row => [...row]);
+            const steps = {count: 0};
+            const startTime = performance.now();
+            
+            if (solve(board, steps)) {
+                const endTime = performance.now();
+                displaySolution(board, steps.count, endTime - startTime);
+            } else {
+                document.getElementById('output').style.display = 'block';
+                document.getElementById('resultContent').innerHTML = `
+                    <div class="alert alert-error">✗ No solution exists for this puzzle!</div>
+                `;
+            }
+        }
+
+        function displaySolution(solution, steps, time) {
+            const output = document.getElementById('output');
+            const resultContent = document.getElementById('resultContent');
+            const solutionGrid = document.getElementById('solutionGrid');
+            const stats = document.getElementById('stats');
+            
+            output.style.display = 'block';
+            
+            resultContent.innerHTML = `
+                <div class="alert alert-success">✓ Puzzle solved successfully!</div>
+            `;
+
+            const gridDiv = document.createElement('div');
+            gridDiv.style.display = 'inline-grid';
+            gridDiv.style.gridTemplateColumns = 'repeat(4, 70px)';
+            gridDiv.style.gap = '5px';
+            gridDiv.style.background = '#333';
+            gridDiv.style.padding = '5px';
+            gridDiv.style.borderRadius = '8px';
+            
+            for (let i = 0; i < 4; i++) {
+                for (let j = 0; j < 4; j++) {
+                    const cell = document.createElement('div');
+                    cell.style.width = '70px';
+                    cell.style.height = '70px';
+                    cell.style.background = puzzle[i][j] === 0 ? '#e8f5e9' : 'white';
+                    cell.style.display = 'flex';
+                    cell.style.alignItems = 'center';
+                    cell.style.justifyContent = 'center';
+                    cell.style.fontSize = '28px';
+                    cell.style.fontWeight = 'bold';
+                    cell.style.color = puzzle[i][j] === 0 ? '#2ecc71' : '#333';
+                    cell.style.borderRadius = '5px';
+                    cell.textContent = solution[i][j];
+                    gridDiv.appendChild(cell);
+                }
+            }
+            
+            solutionGrid.innerHTML = '';
+            solutionGrid.appendChild(gridDiv);
+
+            stats.innerHTML = `
+                <div class="stat-card">
+                    <div class="label">Backtracking Steps</div>
+                    <div class="value">${steps}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Time Taken</div>
+                    <div class="value">${time.toFixed(2)}ms</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Algorithm</div>
+                    <div class="value" style="font-size: 1.1rem">Backtracking</div>
+                </div>
+            `;
+        }
+
+        function loadSamplePuzzle() {
+            puzzle = [
+                [1, 0, 0, 4],
+                [0, 0, 1, 0],
+                [0, 3, 0, 0],
+                [4, 0, 0, 2]
+            ];
+            renderInput();
+        }
+
+        function clearPuzzle() {
+            puzzle = Array(4).fill(null).map(() => Array(4).fill(0));
+            renderInput();
+            document.getElementById('output').style.display = 'none';
+        }
+
+        renderInput();
+    </script>
+</body>
+</html>

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Problem 14: Mini Movie Recommendation</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <style>
+        body { background: #141414; }
+        .problem-container { background: linear-gradient(135deg, #1a1a1a 0%, #2d0a0a 100%); color: #e5e5e5; border: 2px solid #e50914; box-shadow: 0 0 60px rgba(229, 9, 20, 0.4); }
+        .back-button { background: #e50914; color: white; border-radius: 5px; font-weight: 700; text-transform: uppercase; }
+        .back-button:hover { background: #ff1a1a; }
+        .problem-header { border-bottom: 3px solid #e50914; background: linear-gradient(135deg, #2d0a0a 0%, #1a1a1a 100%); }
+        .problem-header h1 { color: #e50914; font-weight: 700; }
+        .controls { background: #1a1a1a; border: 2px solid #e50914; }
+        .controls h3 { color: #e50914; }
+        .controls label { color: #b3b3b3; }
+        .btn { background: #e50914; color: white; border-radius: 5px; font-weight: 600; text-transform: uppercase; }
+        .btn:hover { background: #ff1a1a; }
+        .btn-secondary { background: #333333; border: 2px solid #e50914; }
+        input[type="text"], input[type="number"], select { background: #333333; color: #e5e5e5; border: 1px solid #e50914; }
+        .output { background: #1a1a1a; border: 2px solid #e50914; color: #e5e5e5; }
+        table { background: #2d0a0a; }
+        thead { background: #e50914; }
+        tr:hover { background: rgba(229, 9, 20, 0.1); }
+    </style>
+    <div class="problem-container">
+        <a href="index.html" class="back-button">← Back to Home</a>
+        
+        <div class="problem-header">
+            <h1>🎥 Problem 14: Mini Movie Recommendation System</h1>
+            <p class="description">
+                Similarity-based movie recommender using genre, year, and rating data.
+            </p>
+        </div>
+
+        <div class="controls">
+            <h3>Your Preferences</h3>
+            <div class="control-group">
+                <label>Favorite Genres (select multiple):</label>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                    <label><input type="checkbox" value="Action"> Action</label>
+                    <label><input type="checkbox" value="Drama"> Drama</label>
+                    <label><input type="checkbox" value="Comedy"> Comedy</label>
+                    <label><input type="checkbox" value="Sci-Fi"> Sci-Fi</label>
+                    <label><input type="checkbox" value="Thriller"> Thriller</label>
+                    <label><input type="checkbox" value="Romance"> Romance</label>
+                </div>
+            </div>
+            <div class="control-group">
+                <label>Preferred Era:</label>
+                <select id="era">
+                    <option value="any">Any Era</option>
+                    <option value="classic">Classic (Before 2000)</option>
+                    <option value="modern">Modern (2000-2010)</option>
+                    <option value="recent">Recent (2010+)</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>Minimum Rating:</label>
+                <select id="minRating">
+                    <option value="0">Any Rating</option>
+                    <option value="7.0">7.0+</option>
+                    <option value="8.0">8.0+</option>
+                    <option value="8.5">8.5+</option>
+                </select>
+            </div>
+            <button class="btn" onclick="getRecommendations()">Get Recommendations</button>
+        </div>
+
+        <div id="output" class="output" style="display:none;">
+            <h3>Top 3 Recommendations</h3>
+            <div id="resultContent"></div>
+        </div>
+    </div>
+
+    <script>
+        const movies = [
+            {title: "The Shawshank Redemption", genres: ["Drama"], year: 1994, rating: 9.3, plot: "Two imprisoned men bond over years"},
+            {title: "The Dark Knight", genres: ["Action", "Crime", "Drama"], year: 2008, rating: 9.0, plot: "Batman faces the Joker"},
+            {title: "Inception", genres: ["Action", "Sci-Fi", "Thriller"], year: 2010, rating: 8.8, plot: "Dream within a dream heist"},
+            {title: "Pulp Fiction", genres: ["Crime", "Drama"], year: 1994, rating: 8.9, plot: "Interconnected crime stories"},
+            {title: "The Matrix", genres: ["Action", "Sci-Fi"], year: 1999, rating: 8.7, plot: "Reality is a simulation"},
+            {title: "Goodfellas", genres: ["Crime", "Drama"], year: 1990, rating: 8.7, plot: "Rise and fall of a mobster"},
+            {title: "Interstellar", genres: ["Drama", "Sci-Fi"], year: 2014, rating: 8.6, plot: "Space exploration to save humanity"},
+            {title: "The Prestige", genres: ["Drama", "Thriller"], year: 2006, rating: 8.5, plot: "Rivalry between magicians"},
+            {title: "The Departed", genres: ["Crime", "Drama", "Thriller"], year: 2006, rating: 8.5, plot: "Mole in police vs mob"},
+            {title: "Gladiator", genres: ["Action", "Drama"], year: 2000, rating: 8.5, plot: "Roman general seeks revenge"}
+        ];
+
+        function calculateSimilarity(movie, preferences) {
+            let score = 0;
+
+            // Genre matching
+            const userGenres = preferences.genres;
+            const matchedGenres = movie.genres.filter(g => userGenres.includes(g)).length;
+            score += matchedGenres * 30;
+
+            // Era matching
+            if (preferences.era !== 'any') {
+                if (preferences.era === 'classic' && movie.year < 2000) score += 20;
+                if (preferences.era === 'modern' && movie.year >= 2000 && movie.year < 2010) score += 20;
+                if (preferences.era === 'recent' && movie.year >= 2010) score += 20;
+            }
+
+            // Rating bonus
+            score += movie.rating * 5;
+
+            // Minimum rating filter
+            if (movie.rating < preferences.minRating) score -= 100;
+
+            return score;
+        }
+
+        function getRecommendations() {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]:checked');
+            const genres = Array.from(checkboxes).map(cb => cb.value);
+
+            if (genres.length === 0) {
+                alert('Please select at least one genre');
+                return;
+            }
+
+            const preferences = {
+                genres,
+                era: document.getElementById('era').value,
+                minRating: parseFloat(document.getElementById('minRating').value)
+            };
+
+            const scoredMovies = movies.map(movie => ({
+                ...movie,
+                score: calculateSimilarity(movie, preferences)
+            }));
+
+            scoredMovies.sort((a, b) => b.score - a.score);
+            const top3 = scoredMovies.slice(0, 3).filter(m => m.score > 0);
+
+            if (top3.length === 0) {
+                document.getElementById('output').style.display = 'block';
+                document.getElementById('resultContent').innerHTML = `
+                    <div class="alert alert-warning">
+                        No movies match your criteria. Try adjusting your preferences.
+                    </div>
+                `;
+                return;
+            }
+
+            displayRecommendations(top3, preferences);
+        }
+
+        function displayRecommendations(movies, preferences) {
+            const output = document.getElementById('output');
+            const resultContent = document.getElementById('resultContent');
+
+            output.style.display = 'block';
+
+            resultContent.innerHTML = `
+                <div class="alert alert-success">
+                    Based on your preferences: ${preferences.genres.join(', ')}
+                </div>
+                
+                ${movies.map((movie, i) => `
+                    <div style="background: ${i === 0 ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'white'}; 
+                                color: ${i === 0 ? 'white' : '#333'}; 
+                                padding: 25px; 
+                                margin: 20px 0; 
+                                border-radius: 15px; 
+                                border-left: 5px solid ${['#f39c12', '#bdc3c7', '#cd7f32'][i]};">
+                        <div style="display: flex; justify-content: space-between; align-items: start;">
+                            <div>
+                                <h3 style="font-size: 1.8rem; margin-bottom: 10px;">
+                                    ${['🥇', '🥈', '🥉'][i]} ${movie.title}
+                                </h3>
+                                <p style="margin: 5px 0; ${i === 0 ? 'opacity: 0.9' : 'color: #666'};">
+                                    <strong>Year:</strong> ${movie.year} | <strong>Rating:</strong> ⭐ ${movie.rating}/10
+                                </p>
+                                <p style="margin: 5px 0; ${i === 0 ? 'opacity: 0.9' : 'color: #666'};">
+                                    <strong>Genres:</strong> ${movie.genres.join(', ')}
+                                </p>
+                                <p style="margin: 10px 0; ${i === 0 ? 'opacity: 0.9' : 'color: #666'};">
+                                    ${movie.plot}
+                                </p>
+                            </div>
+                            <div style="text-align: center; min-width: 100px;">
+                                <div style="font-size: 2rem; font-weight: bold;">${movie.score}</div>
+                                <div style="font-size: 0.9rem; ${i === 0 ? 'opacity: 0.8' : 'color: #999'};">Match Score</div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('')}
+
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-top: 20px;">
+                    <h4>How Scoring Works:</h4>
+                    <ul style="margin-top: 10px; line-height: 1.8;">
+                        <li><strong>+30 points</strong> per matching genre</li>
+                        <li><strong>+20 points</strong> for matching era preference</li>
+                        <li><strong>+5 points</strong> per rating point (e.g., 8.5 rating = 42.5 points)</li>
+                        <li><strong>-100 points</strong> if below minimum rating threshold</li>
+                    </ul>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

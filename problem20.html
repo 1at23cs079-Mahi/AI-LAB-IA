@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Problem 20: Mini Medical Expert System</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <style>
+        body { background: linear-gradient(135deg, #0d9488 0%, #06b6d4 100%); }
+        .problem-container { background: white; border-top: 10px solid #0d9488; box-shadow: 0 20px 60px rgba(13, 148, 136, 0.3); }
+        .back-button { background: #0d9488; color: white; border-radius: 50px; font-weight: 600; padding: 12px 30px; }
+        .back-button:hover { background: #0f766e; transform: scale(1.05); }
+        .problem-header { border-bottom: 4px solid #0d9488; background: linear-gradient(135deg, #ccfbf1 0%, #99f6e4 100%); margin: -40px -40px 30px -40px; padding: 40px; }
+        .problem-header h1 { color: #134e4a; font-weight: 700; }
+        .problem-header .description { color: #115e59; }
+        .controls { background: #f0fdfa; border: 3px solid #5eead4; border-radius: 15px; }
+        .controls h3 { color: #134e4a; font-weight: 600; }
+        .controls label { color: #115e59; font-weight: 500; }
+        .btn { background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%); border-radius: 50px; font-weight: 600; }
+        .btn:hover { background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); transform: scale(1.05); }
+        .btn-secondary { background: white; color: #0d9488; border: 2px solid #5eead4; }
+        input[type="checkbox"] { accent-color: #0d9488; }
+        .output { background: #f0fdfa; border: 3px solid #0d9488; border-radius: 15px; }
+    </style>
+    <div class="problem-container">
+        <a href="index.html" class="back-button">← Back to Home</a>
+        
+        <div class="problem-header">
+            <h1>🏥 Problem 20: Mini Medical Expert System</h1>
+            <p class="description">
+                Forward chaining expert system classifying patients using 10 rules and 8 symptoms (Educational - Non-Clinical).
+            </p>
+        </div>
+
+        <div class="controls">
+            <h3>Patient Symptoms Assessment</h3>
+            <div class="control-group">
+                <label>Select Patient Symptoms:</label>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px;">
+                    <label><input type="checkbox" value="high_temp"> High Temperature (>38°C)</label>
+                    <label><input type="checkbox" value="low_temp"> Low Temperature (<36°C)</label>
+                    <label><input type="checkbox" value="excessive_thirst"> Excessive Thirst</label>
+                    <label><input type="checkbox" value="dry_mouth"> Dry Mouth</label>
+                    <label><input type="checkbox" value="weakness"> Weakness/Fatigue</label>
+                    <label><input type="checkbox" value="dizziness"> Dizziness</label>
+                    <label><input type="checkbox" value="sweating"> Excessive Sweating</label>
+                    <label><input type="checkbox" value="shivering"> Shivering</label>
+                </div>
+            </div>
+            <button class="btn" onclick="diagnosePatient()">Diagnose Patient</button>
+            <button class="btn btn-secondary" onclick="clearSymptoms()">Clear Symptoms</button>
+            <div style="margin-top: 15px; display: flex; gap: 10px;">
+                <button class="btn btn-secondary" onclick="loadSamplePatient(1)">Sample Patient 1</button>
+                <button class="btn btn-secondary" onclick="loadSamplePatient(2)">Sample Patient 2</button>
+                <button class="btn btn-secondary" onclick="loadSamplePatient(3)">Sample Patient 3</button>
+            </div>
+        </div>
+
+        <div id="output" class="output" style="display:none;">
+            <h3>Diagnosis Result</h3>
+            <div id="resultContent"></div>
+            <div id="rulesApplied"></div>
+        </div>
+    </div>
+
+    <script>
+        // Forward Chaining Rules
+        const rules = [
+            {
+                id: 1,
+                name: "Severe Dehydration",
+                condition: (s) => s.has('excessive_thirst') && s.has('dry_mouth') && s.has('weakness') && s.has('dizziness'),
+                diagnosis: "Dehydrated",
+                severity: "Severe",
+                recommendation: "Immediate IV fluid replacement required. Seek emergency care."
+            },
+            {
+                id: 2,
+                name: "Moderate Dehydration",
+                condition: (s) => (s.has('excessive_thirst') && s.has('dry_mouth')) || (s.has('excessive_thirst') && s.has('weakness')),
+                diagnosis: "Dehydrated",
+                severity: "Moderate",
+                recommendation: "Increase fluid intake. Oral rehydration solutions recommended."
+            },
+            {
+                id: 3,
+                name: "Heat Exhaustion with High Temp",
+                condition: (s) => s.has('high_temp') && s.has('sweating') && s.has('weakness') && s.has('dizziness'),
+                diagnosis: "Heat Exhaustion",
+                severity: "Severe",
+                recommendation: "Move to cool area, apply cool compresses, hydrate. Medical attention needed."
+            },
+            {
+                id: 4,
+                name: "Heat Exhaustion Mild",
+                condition: (s) => s.has('high_temp') && s.has('sweating') && (s.has('weakness') || s.has('dizziness')),
+                diagnosis: "Heat Exhaustion",
+                severity: "Moderate",
+                recommendation: "Rest in cool area, drink water, monitor symptoms."
+            },
+            {
+                id: 5,
+                name: "Hypothermia",
+                condition: (s) => s.has('low_temp') && s.has('shivering'),
+                diagnosis: "Cold",
+                severity: "Moderate",
+                recommendation: "Warm environment, warm fluids, layer clothing. Monitor body temperature."
+            },
+            {
+                id: 6,
+                name: "Fever Present",
+                condition: (s) => s.has('high_temp') && !s.has('sweating'),
+                diagnosis: "Cold",
+                severity: "Mild",
+                recommendation: "Rest, fluids, fever reducers if needed. Monitor temperature."
+            },
+            {
+                id: 7,
+                name: "Mild Dehydration",
+                condition: (s) => s.has('excessive_thirst') || s.has('dry_mouth'),
+                diagnosis: "Dehydrated",
+                severity: "Mild",
+                recommendation: "Increase water intake throughout the day."
+            },
+            {
+                id: 8,
+                name: "General Fatigue",
+                condition: (s) => s.has('weakness') && !s.has('high_temp') && !s.has('excessive_thirst'),
+                diagnosis: "Normal",
+                severity: "Mild",
+                recommendation: "Rest, balanced diet, adequate sleep. Consult doctor if persistent."
+            },
+            {
+                id: 9,
+                name: "Mild Cold Symptoms",
+                condition: (s) => s.has('shivering') && !s.has('low_temp'),
+                diagnosis: "Cold",
+                severity: "Mild",
+                recommendation: "Warm clothing, hot beverages, rest."
+            },
+            {
+                id: 10,
+                name: "Normal - No Significant Symptoms",
+                condition: (s) => s.size === 0 || (s.size === 1 && !s.has('high_temp') && !s.has('low_temp')),
+                diagnosis: "Normal",
+                severity: "None",
+                recommendation: "No immediate concerns. Maintain healthy lifestyle."
+            }
+        ];
+
+        function getSymptoms() {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]:checked');
+            return new Set(Array.from(checkboxes).map(cb => cb.value));
+        }
+
+        function diagnosePatient() {
+            const symptoms = getSymptoms();
+
+            const matchedRules = [];
+            let finalDiagnosis = "Normal";
+            let highestSeverity = "None";
+
+            const severityOrder = {"None": 0, "Mild": 1, "Moderate": 2, "Severe": 3};
+
+            for (const rule of rules) {
+                if (rule.condition(symptoms)) {
+                    matchedRules.push(rule);
+                    if (severityOrder[rule.severity] > severityOrder[highestSeverity]) {
+                        highestSeverity = rule.severity;
+                        finalDiagnosis = rule.diagnosis;
+                    }
+                }
+            }
+
+            if (matchedRules.length === 0) {
+                matchedRules.push(rules[9]); // Default "Normal" rule
+            }
+
+            displayDiagnosis(symptoms, matchedRules, finalDiagnosis, highestSeverity);
+        }
+
+        function displayDiagnosis(symptoms, matchedRules, diagnosis, severity) {
+            const output = document.getElementById('output');
+            const resultContent = document.getElementById('resultContent');
+            const rulesApplied = document.getElementById('rulesApplied');
+
+            output.style.display = 'block';
+
+            const diagnosisColors = {
+                "Dehydrated": {bg: "#fff3cd", border: "#ffc107", color: "#856404"},
+                "Heat Exhaustion": {bg: "#f8d7da", border: "#dc3545", color: "#721c24"},
+                "Cold": {bg: "#d1ecf1", border: "#17a2b8", color: "#0c5460"},
+                "Normal": {bg: "#d4edda", border: "#28a745", color: "#155724"}
+            };
+
+            const colors = diagnosisColors[diagnosis];
+
+            const severityIcons = {
+                "None": "✓",
+                "Mild": "ℹ️",
+                "Moderate": "⚠️",
+                "Severe": "🚨"
+            };
+
+            resultContent.innerHTML = `
+                <div style="background: ${colors.bg}; border-left: 5px solid ${colors.border}; padding: 25px; border-radius: 10px;">
+                    <h2 style="color: ${colors.color}; margin-bottom: 15px;">
+                        ${severityIcons[severity]} Diagnosis: ${diagnosis}
+                    </h2>
+                    <p style="color: ${colors.color}; font-size: 1.1rem; margin-bottom: 10px;">
+                        <strong>Severity:</strong> ${severity}
+                    </p>
+                    <p style="color: #333; background: white; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                        <strong>Symptoms Reported:</strong> 
+                        ${symptoms.size > 0 ? Array.from(symptoms).map(s => s.replace('_', ' ')).join(', ') : 'None'}
+                    </p>
+                    <div style="background: white; padding: 15px; border-radius: 8px; margin-top: 15px;">
+                        <strong style="color: ${colors.color};">Primary Recommendation:</strong>
+                        <p style="color: #333; margin-top: 8px;">${matchedRules[0].recommendation}</p>
+                    </div>
+                </div>
+            `;
+
+            rulesApplied.innerHTML = `
+                <h4 style="margin-top: 25px;">⚡ Forward Chaining Rules Applied</h4>
+                <table>
+                    <tr>
+                        <th>Rule ID</th>
+                        <th>Rule Name</th>
+                        <th>Diagnosis</th>
+                        <th>Severity</th>
+                        <th>Recommendation</th>
+                    </tr>
+                    ${matchedRules.map(rule => `
+                        <tr>
+                            <td><strong>${rule.id}</strong></td>
+                            <td>${rule.name}</td>
+                            <td>${rule.diagnosis}</td>
+                            <td>${rule.severity}</td>
+                            <td>${rule.recommendation}</td>
+                        </tr>
+                    `).join('')}
+                </table>
+
+                <div class="alert alert-warning" style="margin-top: 25px;">
+                    <strong>⚠️ DISCLAIMER:</strong> This is an educational simulation only. This system is NOT for real medical diagnosis. 
+                    Always consult qualified healthcare professionals for actual medical concerns.
+                </div>
+
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-top: 20px;">
+                    <h4>About Forward Chaining</h4>
+                    <p style="line-height: 1.8; color: #666;">
+                        This expert system uses <strong>forward chaining</strong> inference. It evaluates all rules against the provided symptoms,
+                        matching conditions from the data (symptoms) to reach conclusions (diagnoses). Multiple rules may fire, with the 
+                        most severe diagnosis taking priority.
+                    </p>
+                </div>
+            `;
+        }
+
+        function clearSymptoms() {
+            document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+            document.getElementById('output').style.display = 'none';
+        }
+
+        function loadSamplePatient(num) {
+            clearSymptoms();
+            const patients = {
+                1: ['high_temp', 'sweating', 'weakness', 'dizziness'], // Heat Exhaustion
+                2: ['excessive_thirst', 'dry_mouth', 'weakness'], // Dehydration
+                3: ['low_temp', 'shivering'] // Cold
+            };
+            patients[num].forEach(symptom => {
+                const cb = document.querySelector(`input[value="${symptom}"]`);
+                if (cb) cb.checked = true;
+            });
+            diagnosePatient();
+        }
+    </script>
+</body>
+</html>

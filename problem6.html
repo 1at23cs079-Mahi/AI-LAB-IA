@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Problem 6: Emergency Evacuation Assistant</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <style>
+        body { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); }
+        .problem-container { background: white; box-shadow: 0 10px 40px rgba(30, 60, 114, 0.5); border-radius: 20px; }
+        .back-button { background: #3b5998; border-radius: 50px; padding: 12px 25px; font-weight: 600; }
+        .back-button:hover { background: #1e3c72; transform: translateY(-3px); box-shadow: 0 5px 15px rgba(30, 60, 114, 0.4); }
+        .problem-header { border-bottom: 4px solid #3b5998; background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); margin: -40px -40px 30px -40px; padding: 40px; }
+        .problem-header h1 { color: #1e3c72; font-weight: 700; }
+        .controls { background: white; border: 3px solid #3b5998; box-shadow: 0 3px 10px rgba(59, 89, 152, 0.1); }
+        .controls h3 { color: #3b5998; }
+        .btn { background: linear-gradient(135deg, #3b5998 0%, #1e3c72 100%); box-shadow: 0 4px 10px rgba(30, 60, 114, 0.3); }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(30, 60, 114, 0.4); }
+        .output { background: #f5f9ff; border: 2px solid #3b5998; }
+    </style>
+    <div class="problem-container">
+        <a href="index.html" class="back-button">← Back to Home</a>
+        
+        <div class="problem-header">
+            <h1>🚨 Problem 6: Emergency Evacuation Assistant</h1>
+            <p class="description">
+                Use Uniform Cost Search to compute the fastest evacuation path considering dynamic congestion levels.
+            </p>
+        </div>
+
+        <div class="controls">
+            <h3>Building Layout</h3>
+            <div class="control-group">
+                <label>Congestion levels: Green (1), Yellow (3), Orange (5), Red (10)</label>
+                <div id="gridSetup" class="visualization"></div>
+            </div>
+            <button class="btn" onclick="findEvacuationPath()">Find Fastest Path</button>
+            <button class="btn btn-secondary" onclick="randomCongestion()">Random Congestion</button>
+            <button class="btn btn-secondary" onclick="resetBuilding()">Reset</button>
+        </div>
+
+        <div id="output" class="output" style="display:none;">
+            <h3>Evacuation Plan</h3>
+            <div id="resultContent"></div>
+            <div class="visualization">
+                <div id="solutionGrid"></div>
+            </div>
+            <div class="stats" id="stats"></div>
+        </div>
+    </div>
+
+    <script>
+        const SIZE = 6;
+        let congestion = [];
+        let start = {x: 5, y: 5};
+        let exit = {x: 0, y: 0};
+
+        function initBuilding() {
+            congestion = Array(SIZE).fill(null).map(() => 
+                Array(SIZE).fill(null).map(() => Math.floor(Math.random() * 4) + 1)
+            );
+            congestion[start.x][start.y] = 0;
+            congestion[exit.x][exit.y] = 0;
+            renderBuilding();
+        }
+
+        function renderBuilding() {
+            const container = document.getElementById('gridSetup');
+            const gridDiv = document.createElement('div');
+            gridDiv.className = 'grid';
+            gridDiv.style.gridTemplateColumns = `repeat(${SIZE}, 1fr)`;
+            
+            for (let i = 0; i < SIZE; i++) {
+                for (let j = 0; j < SIZE; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.style.cursor = 'pointer';
+                    cell.onclick = () => {
+                        if ((i !== start.x || j !== start.y) && (i !== exit.x || j !== exit.y)) {
+                            congestion[i][j] = (congestion[i][j] % 10) + 1;
+                            renderBuilding();
+                        }
+                    };
+                    
+                    const level = congestion[i][j];
+                    if (i === start.x && j === start.y) {
+                        cell.style.background = '#3498db';
+                        cell.textContent = 'S';
+                        cell.style.color = 'white';
+                    } else if (i === exit.x && j === exit.y) {
+                        cell.style.background = '#2ecc71';
+                        cell.textContent = 'E';
+                        cell.style.color = 'white';
+                    } else {
+                        const colors = {1: '#d5f4e6', 3: '#fff9c4', 5: '#ffcc80', 10: '#ef9a9a'};
+                        cell.style.background = colors[level] || '#ffebee';
+                        cell.textContent = level;
+                    }
+                    
+                    gridDiv.appendChild(cell);
+                }
+            }
+            container.innerHTML = '';
+            container.appendChild(gridDiv);
+        }
+
+        function uniformCostSearch() {
+            const pq = [{pos: start, cost: 0, path: [start]}];
+            const visited = new Set();
+            const costs = {};
+            costs[`${start.x},${start.y}`] = 0;
+
+            while (pq.length > 0) {
+                pq.sort((a, b) => a.cost - b.cost);
+                const {pos, cost, path} = pq.shift();
+                const key = `${pos.x},${pos.y}`;
+
+                if (visited.has(key)) continue;
+                visited.add(key);
+
+                if (pos.x === exit.x && pos.y === exit.y) {
+                    return {path, cost, visited: visited.size};
+                }
+
+                [[0,1],[1,0],[0,-1],[-1,0]].forEach(([dx,dy]) => {
+                    const nx = pos.x + dx, ny = pos.y + dy;
+                    const nkey = `${nx},${ny}`;
+
+                    if (nx >= 0 && nx < SIZE && ny >= 0 && ny < SIZE && !visited.has(nkey)) {
+                        const newCost = cost + congestion[nx][ny];
+                        if (!(nkey in costs) || newCost < costs[nkey]) {
+                            costs[nkey] = newCost;
+                            pq.push({pos: {x: nx, y: ny}, cost: newCost, path: [...path, {x: nx, y: ny}]});
+                        }
+                    }
+                });
+            }
+            return null;
+        }
+
+        function findEvacuationPath() {
+            const result = uniformCostSearch();
+            if (!result) {
+                alert('No path found!');
+                return;
+            }
+
+            const output = document.getElementById('output');
+            const resultContent = document.getElementById('resultContent');
+            const solutionGrid = document.getElementById('solutionGrid');
+            const stats = document.getElementById('stats');
+            
+            output.style.display = 'block';
+            
+            const avgCongestion = (result.cost / result.path.length).toFixed(1);
+            
+            resultContent.innerHTML = `
+                <div class="alert alert-success">
+                    ✓ Evacuation path found! Total time cost: ${result.cost} units
+                </div>
+            `;
+
+            const gridDiv = document.createElement('div');
+            gridDiv.className = 'grid';
+            gridDiv.style.gridTemplateColumns = `repeat(${SIZE}, 1fr)`;
+            const pathSet = new Set(result.path.map(p => `${p.x},${p.y}`));
+            
+            for (let i = 0; i < SIZE; i++) {
+                for (let j = 0; j < SIZE; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    const key = `${i},${j}`;
+                    
+                    if (i === start.x && j === start.y) {
+                        cell.style.background = '#3498db';
+                        cell.textContent = 'S';
+                        cell.style.color = 'white';
+                    } else if (i === exit.x && j === exit.y) {
+                        cell.style.background = '#2ecc71';
+                        cell.textContent = 'E';
+                        cell.style.color = 'white';
+                    } else if (pathSet.has(key)) {
+                        cell.style.background = '#667eea';
+                        cell.textContent = congestion[i][j];
+                        cell.style.color = 'white';
+                    } else {
+                        cell.textContent = congestion[i][j];
+                    }
+                    
+                    gridDiv.appendChild(cell);
+                }
+            }
+            
+            solutionGrid.innerHTML = '';
+            solutionGrid.appendChild(gridDiv);
+
+            stats.innerHTML = `
+                <div class="stat-card">
+                    <div class="label">Total Cost</div>
+                    <div class="value">${result.cost}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Path Length</div>
+                    <div class="value">${result.path.length}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Avg Congestion</div>
+                    <div class="value">${avgCongestion}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Nodes Visited</div>
+                    <div class="value">${result.visited}</div>
+                </div>
+            `;
+        }
+
+        function randomCongestion() {
+            initBuilding();
+        }
+
+        function resetBuilding() {
+            initBuilding();
+            document.getElementById('output').style.display = 'none';
+        }
+
+        initBuilding();
+    </script>
+</body>
+</html>

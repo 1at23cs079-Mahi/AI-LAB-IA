@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Problem 13: Sentiment Analyzer</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <style>
+        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .problem-container { background: white; border-radius: 25px; box-shadow: 0 20px 60px rgba(102, 126, 234, 0.3); }
+        .back-button { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50px; color: white; font-weight: 600; }
+        .back-button:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4); }
+        .problem-header { border-bottom: 4px solid #667eea; background: linear-gradient(135deg, #f0f0ff 0%, #e8e0ff 100%); margin: -40px -40px 30px -40px; padding: 40px; border-radius: 25px 25px 0 0; }
+        .problem-header h1 { color: #5a4ea3; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .controls { background: #f8f7ff; border: 3px solid #667eea; border-radius: 15px; }
+        .controls h3 { color: #5a4ea3; }
+        .btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 25px; font-weight: 600; }
+        .btn:hover { background: linear-gradient(135deg, #764ba2 0%, #667eea 100%); transform: scale(1.05); }
+        .output { background: linear-gradient(135deg, #f8f7ff 0%, #f0f0ff 100%); border: 3px solid #667eea; border-radius: 15px; }
+        .sentiment-positive { color: #10b981; font-weight: bold; }
+        .sentiment-negative { color: #ef4444; font-weight: bold; }
+        .sentiment-neutral { color: #6b7280; font-weight: bold; }
+    </style>
+    <div class="problem-container">
+        <a href="index.html" class="back-button">← Back to Home</a>
+        
+        <div class="problem-header">
+            <h1>💬 Problem 13: YouTube Comment Sentiment Analyzer</h1>
+            <p class="description">
+                Classify comments as positive, negative, or neutral using simple NLP techniques.
+            </p>
+        </div>
+
+        <div class="controls">
+            <h3>Add Comments</h3>
+            <div class="control-group">
+                <label>Enter Comment:</label>
+                <textarea id="commentInput" placeholder="Type a comment..."></textarea>
+            </div>
+            <button class="btn" onclick="addComment()">Add Comment</button>
+            <button class="btn btn-secondary" onclick="loadSampleComments()">Load Sample Comments</button>
+            <button class="btn btn-secondary" onclick="clearComments()">Clear All</button>
+        </div>
+
+        <div id="commentsList" class="output" style="display:none;">
+            <h3>Comments</h3>
+            <div id="commentsDisplay"></div>
+            <button class="btn" onclick="analyzeAllComments()" style="margin-top: 15px;">Analyze Sentiment</button>
+        </div>
+
+        <div id="output" class="output" style="display:none;">
+            <h3>Sentiment Analysis Results</h3>
+            <div id="resultContent"></div>
+            <div class="stats" id="stats"></div>
+        </div>
+    </div>
+
+    <script>
+        let comments = [];
+
+        const positiveWords = ['good', 'great', 'excellent', 'amazing', 'love', 'wonderful', 'fantastic', 'awesome', 'perfect', 'best', 'beautiful', 'happy', 'nice', 'brilliant', 'outstanding'];
+        const negativeWords = ['bad', 'terrible', 'awful', 'hate', 'worst', 'horrible', 'poor', 'disappointing', 'useless', 'garbage', 'trash', 'annoying', 'boring', 'waste', 'pathetic'];
+
+        function analyzeSentiment(text) {
+            const words = text.toLowerCase().split(/\W+/);
+            let positiveScore = 0;
+            let negativeScore = 0;
+
+            words.forEach(word => {
+                if (positiveWords.includes(word)) positiveScore++;
+                if (negativeWords.includes(word)) negativeScore++;
+            });
+
+            if (positiveScore > negativeScore) return 'positive';
+            if (negativeScore > positiveScore) return 'negative';
+            return 'neutral';
+        }
+
+        function addComment() {
+            const text = document.getElementById('commentInput').value.trim();
+            if (!text) {
+                alert('Please enter a comment');
+                return;
+            }
+
+            comments.push({id: Date.now(), text, sentiment: null});
+            document.getElementById('commentInput').value = '';
+            updateCommentsList();
+        }
+
+        function loadSampleComments() {
+            comments = [
+                "This is amazing! Best video ever!",
+                "I love this content, keep it up!",
+                "Absolutely brilliant work, thank you!",
+                "This video was okay, nothing special",
+                "Terrible quality, waste of time",
+                "I hate this, worst video I've seen",
+                "Pretty good explanation, learned a lot",
+                "Not bad, could be better though",
+                "Awful content, very disappointing",
+                "Fantastic! Exactly what I needed",
+                "Boring and useless information",
+                "Great job on this tutorial!",
+                "This is trash, don't waste your time",
+                "Nice video, very helpful",
+                "Poor quality, annoying music"
+            ].map((text, i) => ({id: i, text, sentiment: null}));
+            updateCommentsList();
+        }
+
+        function clearComments() {
+            comments = [];
+            updateCommentsList();
+            document.getElementById('output').style.display = 'none';
+        }
+
+        function updateCommentsList() {
+            const commentsList = document.getElementById('commentsList');
+            const commentsDisplay = document.getElementById('commentsDisplay');
+
+            if (comments.length === 0) {
+                commentsList.style.display = 'none';
+                return;
+            }
+
+            commentsList.style.display = 'block';
+
+            commentsDisplay.innerHTML = `
+                <div style="max-height: 400px; overflow-y: auto;">
+                    ${comments.map((comment, i) => `
+                        <div style="background: white; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #667eea;">
+                            <p style="margin: 0;">${i + 1}. ${comment.text}</p>
+                        </div>
+                    `).join('')}
+                </div>
+                <p style="margin-top: 15px; color: #666;">Total Comments: ${comments.length}</p>
+            `;
+        }
+
+        function analyzeAllComments() {
+            comments.forEach(comment => {
+                comment.sentiment = analyzeSentiment(comment.text);
+            });
+
+            const positive = comments.filter(c => c.sentiment === 'positive').length;
+            const negative = comments.filter(c => c.sentiment === 'negative').length;
+            const neutral = comments.filter(c => c.sentiment === 'neutral').length;
+
+            displayResults(positive, negative, neutral);
+        }
+
+        function displayResults(positive, negative, neutral) {
+            const output = document.getElementById('output');
+            const resultContent = document.getElementById('resultContent');
+            const stats = document.getElementById('stats');
+
+            output.style.display = 'block';
+
+            const total = comments.length;
+            const positivePercent = ((positive / total) * 100).toFixed(1);
+            const negativePercent = ((negative / total) * 100).toFixed(1);
+            const neutralPercent = ((neutral / total) * 100).toFixed(1);
+
+            resultContent.innerHTML = `
+                <div class="alert alert-success">
+                    ✓ Analyzed ${total} comments successfully!
+                </div>
+                
+                <table style="margin-top: 20px;">
+                    <tr>
+                        <th>Comment</th>
+                        <th>Sentiment</th>
+                    </tr>
+                    ${comments.map(comment => {
+                        const colors = {
+                            positive: {bg: '#d4edda', color: '#155724'},
+                            negative: {bg: '#f8d7da', color: '#721c24'},
+                            neutral: {bg: '#fff3cd', color: '#856404'}
+                        };
+                        const style = colors[comment.sentiment];
+                        return `
+                            <tr style="background: ${style.bg};">
+                                <td>${comment.text}</td>
+                                <td style="color: ${style.color}; font-weight: bold;">
+                                    ${comment.sentiment.toUpperCase()}
+                                    ${comment.sentiment === 'positive' ? '😊' : comment.sentiment === 'negative' ? '😞' : '😐'}
+                                </td>
+                            </tr>
+                        `;
+                    }).join('')}
+                </table>
+            `;
+
+            stats.innerHTML = `
+                <div class="stat-card" style="border-left-color: #28a745;">
+                    <div class="label">😊 Positive</div>
+                    <div class="value">${positive} (${positivePercent}%)</div>
+                </div>
+                <div class="stat-card" style="border-left-color: #dc3545;">
+                    <div class="label">😞 Negative</div>
+                    <div class="value">${negative} (${negativePercent}%)</div>
+                </div>
+                <div class="stat-card" style="border-left-color: #ffc107;">
+                    <div class="label">😐 Neutral</div>
+                    <div class="value">${neutral} (${neutralPercent}%)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Total Comments</div>
+                    <div class="value">${total}</div>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

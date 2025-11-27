@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Problem 16-20: Advanced Applications</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <style>
+        body { background: #e8e8e8; }
+        .problem-container { background: white; border-top: 8px solid #d32f2f; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15); }
+        .back-button { background: #d32f2f; color: white; border-radius: 3px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+        .back-button:hover { background: #b71c1c; }
+        .problem-header { border-bottom: 5px double #333; background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%); margin: -40px -40px 30px -40px; padding: 40px; }
+        .problem-header h1 { color: #d32f2f; font-family: 'Times New Roman', serif; font-weight: 900; text-transform: uppercase; border-bottom: 3px solid #d32f2f; padding-bottom: 10px; }
+        .problem-header .description { color: #424242; font-family: Georgia, serif; }
+        .controls { background: #fafafa; border: 3px solid #333; }
+        .controls h3 { color: #333; font-family: 'Times New Roman', serif; font-weight: 700; text-transform: uppercase; }
+        .btn { background: #d32f2f; color: white; border-radius: 3px; font-weight: 700; text-transform: uppercase; }
+        .btn:hover { background: #b71c1c; }
+        textarea { background: white; border: 2px solid #333; font-family: Georgia, serif; }
+        .output { background: #fafafa; border: 3px solid #333; color: #212121; font-family: Georgia, serif; }
+        .reliability-score { color: #d32f2f; font-weight: bold; font-size: 1.5em; }
+    </style>
+    <div class="problem-container">
+        <a href="index.html" class="back-button">← Back to Home</a>
+        
+        <div class="problem-header">
+            <h1>📰 Problem 16: Social Media Fake News Checker</h1>
+            <p class="description">
+                Classify claims as True, False, or Misleading using evidence-based reasoning.
+            </p>
+        </div>
+
+        <div class="controls">
+            <h3>Check a Claim</h3>
+            <div class="control-group">
+                <label>Enter Claim:</label>
+                <textarea id="claimInput" placeholder="Enter a news claim to verify..."></textarea>
+            </div>
+            <button class="btn" onclick="checkClaim()">Verify Claim</button>
+            <button class="btn btn-secondary" onclick="loadSampleClaim()">Load Sample Claim</button>
+        </div>
+
+        <div id="output" class="output" style="display:none;">
+            <h3>Verification Result</h3>
+            <div id="resultContent"></div>
+        </div>
+    </div>
+
+    <script>
+        const knownFacts = {
+            'earth': {keywords: ['earth', 'round', 'sphere'], verdict: 'True', evidence: 'Scientific consensus confirms Earth is spherical'},
+            'vaccine': {keywords: ['vaccine', 'safe', 'effective'], verdict: 'True', evidence: 'Extensive scientific research confirms vaccine safety and efficacy'},
+            'climate': {keywords: ['climate', 'change', 'real'], verdict: 'True', evidence: 'Scientific consensus supports human-caused climate change'},
+            'flat': {keywords: ['flat', 'earth'], verdict: 'False', evidence: 'No scientific evidence supports flat Earth theory'},
+            '5g': {keywords: ['5g', 'coronavirus', 'covid'], verdict: 'False', evidence: 'No credible evidence links 5G to health issues'},
+            'moon': {keywords: ['moon', 'landing', 'fake'], verdict: 'Misleading', evidence: 'Moon landings are well-documented; conspiracy theories lack evidence'}
+        };
+
+        function analyzeClaim(text) {
+            const lowerText = text.toLowerCase();
+            let matches = [];
+
+            for (const [topic, data] of Object.entries(knownFacts)) {
+                const matchCount = data.keywords.filter(kw => lowerText.includes(kw)).length;
+                if (matchCount > 0) {
+                    matches.push({...data, matchCount, topic});
+                }
+            }
+
+            if (matches.length === 0) {
+                return {
+                    verdict: 'Unverified',
+                    evidence: 'Insufficient data to verify this claim. Please consult reliable sources.',
+                    confidence: 0
+                };
+            }
+
+            matches.sort((a, b) => b.matchCount - a.matchCount);
+            const best = matches[0];
+
+            return {
+                verdict: best.verdict,
+                evidence: best.evidence,
+                confidence: Math.min(best.matchCount * 30, 90)
+            };
+        }
+
+        function checkClaim() {
+            const claim = document.getElementById('claimInput').value.trim();
+            if (!claim) {
+                alert('Please enter a claim');
+                return;
+            }
+
+            const result = analyzeClaim(claim);
+            displayResult(claim, result);
+        }
+
+        function loadSampleClaim() {
+            const samples = [
+                "The Earth is flat and governments are hiding this fact",
+                "Vaccines have been proven safe and effective by scientific research",
+                "Climate change is supported by scientific consensus",
+                "5G networks cause coronavirus infections",
+                "The moon landing was filmed in a Hollywood studio"
+            ];
+            document.getElementById('claimInput').value = samples[Math.floor(Math.random() * samples.length)];
+        }
+
+        function displayResult(claim, result) {
+            const output = document.getElementById('output');
+            const resultContent = document.getElementById('resultContent');
+
+            output.style.display = 'block';
+
+            const verdictColors = {
+                'True': {bg: '#d4edda', border: '#28a745', color: '#155724', icon: '✓'},
+                'False': {bg: '#f8d7da', border: '#dc3545', color: '#721c24', icon: '✗'},
+                'Misleading': {bg: '#fff3cd', border: '#ffc107', color: '#856404', icon: '⚠'},
+                'Unverified': {bg: '#e7f3ff', border: '#0056b3', color: '#004085', icon: '?'}
+            };
+
+            const colors = verdictColors[result.verdict];
+
+            resultContent.innerHTML = `
+                <div style="background: ${colors.bg}; border-left: 5px solid ${colors.border}; padding: 25px; border-radius: 10px; margin-bottom: 20px;">
+                    <h2 style="color: ${colors.color}; margin-bottom: 15px;">
+                        ${colors.icon} Verdict: ${result.verdict}
+                    </h2>
+                    <p style="color: #333; background: white; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                        <strong>Claim:</strong> "${claim}"
+                    </p>
+                    <p style="color: ${colors.color}; font-size: 1.1rem; line-height: 1.6; margin-top: 15px;">
+                        <strong>Evidence:</strong> ${result.evidence}
+                    </p>
+                    <div style="margin-top: 20px;">
+                        <strong style="color: ${colors.color};">Confidence Level:</strong>
+                        <div style="background: white; height: 30px; border-radius: 15px; overflow: hidden; margin-top: 10px;">
+                            <div style="background: ${colors.border}; height: 100%; width: ${result.confidence}%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; transition: width 0.5s;">
+                                ${result.confidence}%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-warning">
+                    <strong>⚠️ Important:</strong> This is a simplified educational demo. Always verify claims through multiple reliable sources, fact-checking websites (Snopes, FactCheck.org), and peer-reviewed research.
+                </div>
+
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-top: 20px;">
+                    <h4>How to Verify Claims:</h4>
+                    <ul style="margin-top: 10px; line-height: 1.8;">
+                        <li>Check multiple reliable news sources</li>
+                        <li>Look for peer-reviewed scientific studies</li>
+                        <li>Consult fact-checking websites</li>
+                        <li>Verify the credibility of the source</li>
+                        <li>Check the date of the information</li>
+                        <li>Look for author credentials and expertise</li>
+                    </ul>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

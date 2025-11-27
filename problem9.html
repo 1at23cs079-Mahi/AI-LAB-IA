@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Problem 9: Movie Recommendation</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <style>
+        body { background: #1a1a1a url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="50" font-size="50" opacity="0.05">🎬</text></svg>') repeat; }
+        .problem-container { background: linear-gradient(135deg, #2c1810 0%, #1a0f0a 100%); color: #f5f5f5; border: 4px solid #d4af37; box-shadow: 0 0 40px rgba(212, 175, 55, 0.4); }
+        .back-button { background: linear-gradient(135deg, #d4af37 0%, #c99700 100%); color: #1a0f0a; font-weight: bold; border-radius: 5px; }
+        .back-button:hover { box-shadow: 0 5px 20px rgba(212, 175, 55, 0.6); transform: scale(1.05); }
+        .problem-header { border-bottom: 3px solid #d4af37; background: linear-gradient(135deg, #8b0000 0%, #5c0000 100%); }
+        .problem-header h1 { color: #d4af37; font-family: Georgia, serif; text-shadow: 2px 2px 4px rgba(0,0,0,0.7); }
+        .problem-header .description { color: #f5deb3; }
+        .controls { background: linear-gradient(135deg, #3d2817 0%, #2c1810 100%); border: 2px solid #d4af37; }
+        .controls h3 { color: #d4af37; font-family: Georgia, serif; }
+        .btn { background: linear-gradient(135deg, #d4af37 0%, #c99700 100%); color: #1a0f0a; font-weight: bold; border-radius: 5px; }
+        .btn:hover { background: linear-gradient(135deg, #ffd700 0%, #d4af37 100%); }
+        .output { background: #2c1810; border: 3px solid #d4af37; color: #f5f5f5; }
+        select { background: #3d2817; color: #d4af37; border: 2px solid #d4af37; }
+    </style>
+    <div class="problem-container">
+        <a href="index.html" class="back-button">← Back to Home</a>
+        
+        <div class="problem-header">
+            <h1>🎬 Problem 9: Movie Recommendation Using Rule-Based Filtering</h1>
+            <p class="description">
+                Rule-based inference engine using forward chaining to select top 3 movies based on user preferences.
+            </p>
+        </div>
+
+        <div class="controls">
+            <h3>User Preferences</h3>
+            <div class="control-group">
+                <label>Preferred Genre:</label>
+                <select id="genre">
+                    <option value="action">Action</option>
+                    <option value="comedy">Comedy</option>
+                    <option value="drama">Drama</option>
+                    <option value="scifi">Sci-Fi</option>
+                    <option value="thriller">Thriller</option>
+                    <option value="romance">Romance</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>Mood:</label>
+                <select id="mood">
+                    <option value="excited">Excited</option>
+                    <option value="relaxed">Relaxed</option>
+                    <option value="thoughtful">Thoughtful</option>
+                    <option value="happy">Happy</option>
+                    <option value="tense">Tense</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>Preferred Duration:</label>
+                <select id="duration">
+                    <option value="short">Short (< 100 min)</option>
+                    <option value="medium">Medium (100-140 min)</option>
+                    <option value="long">Long (> 140 min)</option>
+                </select>
+            </div>
+            <button class="btn" onclick="getRecommendations()">Get Recommendations</button>
+        </div>
+
+        <div id="output" class="output" style="display:none;">
+            <h3>Recommended Movies</h3>
+            <div id="resultContent"></div>
+            <div id="rulesApplied"></div>
+        </div>
+    </div>
+
+    <script>
+        const movieDatabase = [
+            {title: "Mad Max: Fury Road", genre: "action", mood: ["excited", "tense"], duration: 120, rating: 8.1},
+            {title: "The Shawshank Redemption", genre: "drama", mood: ["thoughtful", "relaxed"], duration: 142, rating: 9.3},
+            {title: "The Grand Budapest Hotel", genre: "comedy", mood: ["happy", "relaxed"], duration: 99, rating: 8.1},
+            {title: "Inception", genre: "scifi", mood: ["thoughtful", "excited"], duration: 148, rating: 8.8},
+            {title: "Die Hard", genre: "action", mood: ["excited", "tense"], duration: 132, rating: 8.2},
+            {title: "Superbad", genre: "comedy", mood: ["happy", "excited"], duration: 113, rating: 7.6},
+            {title: "Blade Runner 2049", genre: "scifi", mood: ["thoughtful", "tense"], duration: 164, rating: 8.0},
+            {title: "Gone Girl", genre: "thriller", mood: ["tense", "thoughtful"], duration: 149, rating: 8.1},
+            {title: "The Notebook", genre: "romance", mood: ["happy", "thoughtful"], duration: 123, rating: 7.8},
+            {title: "Interstellar", genre: "scifi", mood: ["thoughtful", "excited"], duration: 169, rating: 8.6},
+            {title: "John Wick", genre: "action", mood: ["excited", "tense"], duration: 101, rating: 7.4},
+            {title: "Parasite", genre: "thriller", mood: ["tense", "thoughtful"], duration: 132, rating: 8.6},
+            {title: "The Dark Knight", genre: "action", mood: ["excited", "tense"], duration: 152, rating: 9.0},
+            {title: "Amélie", genre: "romance", mood: ["happy", "relaxed"], duration: 122, rating: 8.3},
+            {title: "Pulp Fiction", genre: "thriller", mood: ["excited", "thoughtful"], duration: 154, rating: 8.9}
+        ];
+
+        function getDurationCategory(minutes) {
+            if (minutes < 100) return "short";
+            if (minutes <= 140) return "medium";
+            return "long";
+        }
+
+        function applyRules(movie, preferences) {
+            let score = 0;
+            const rulesMatched = [];
+
+            // Rule 1: Genre match (highest priority)
+            if (movie.genre === preferences.genre) {
+                score += 50;
+                rulesMatched.push("Genre matches");
+            }
+
+            // Rule 2: Mood match
+            if (movie.mood.includes(preferences.mood)) {
+                score += 30;
+                rulesMatched.push("Mood matches");
+            }
+
+            // Rule 3: Duration preference
+            if (getDurationCategory(movie.duration) === preferences.duration) {
+                score += 15;
+                rulesMatched.push("Duration preference matches");
+            }
+
+            // Rule 4: High rating bonus
+            if (movie.rating >= 8.5) {
+                score += 10;
+                rulesMatched.push("High rating (≥8.5)");
+            } else if (movie.rating >= 8.0) {
+                score += 5;
+                rulesMatched.push("Good rating (≥8.0)");
+            }
+
+            // Rule 5: Genre synergy with mood
+            if (preferences.genre === "action" && preferences.mood === "excited") {
+                score += 10;
+                rulesMatched.push("Action-Excited synergy");
+            }
+            if (preferences.genre === "comedy" && preferences.mood === "happy") {
+                score += 10;
+                rulesMatched.push("Comedy-Happy synergy");
+            }
+            if (preferences.genre === "thriller" && preferences.mood === "tense") {
+                score += 10;
+                rulesMatched.push("Thriller-Tense synergy");
+            }
+
+            return {score, rulesMatched};
+        }
+
+        function getRecommendations() {
+            const preferences = {
+                genre: document.getElementById('genre').value,
+                mood: document.getElementById('mood').value,
+                duration: document.getElementById('duration').value
+            };
+
+            const scoredMovies = movieDatabase.map(movie => {
+                const {score, rulesMatched} = applyRules(movie, preferences);
+                return {...movie, score, rulesMatched};
+            });
+
+            scoredMovies.sort((a, b) => b.score - a.score);
+            const top3 = scoredMovies.slice(0, 3);
+
+            displayRecommendations(top3, preferences);
+        }
+
+        function displayRecommendations(movies, preferences) {
+            const output = document.getElementById('output');
+            const resultContent = document.getElementById('resultContent');
+            const rulesApplied = document.getElementById('rulesApplied');
+            
+            output.style.display = 'block';
+
+            resultContent.innerHTML = `
+                <div class="alert alert-success">
+                    <strong>Based on your preferences:</strong><br>
+                    Genre: ${preferences.genre} | Mood: ${preferences.mood} | Duration: ${preferences.duration}
+                </div>
+                <div style="margin-top: 20px;">
+                    ${movies.map((movie, i) => `
+                        <div style="background: white; padding: 20px; margin: 15px 0; border-radius: 10px; border-left: 5px solid ${i === 0 ? '#f39c12' : i === 1 ? '#bdc3c7' : '#cd7f32'};">
+                            <h3 style="color: #333; margin-bottom: 10px;">
+                                ${i === 1 ? '🥇' : i === 1 ? '🥈' : '🥉'} #${i + 1}: ${movie.title}
+                            </h3>
+                            <p style="color: #666; margin: 5px 0;">
+                                <strong>Genre:</strong> ${movie.genre.toUpperCase()} | 
+                                <strong>Duration:</strong> ${movie.duration} min | 
+                                <strong>Rating:</strong> ⭐ ${movie.rating}/10
+                            </p>
+                            <p style="color: #667eea; font-weight: 600; margin-top: 10px;">
+                                Match Score: ${movie.score} points
+                            </p>
+                            <div style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin-top: 10px;">
+                                <strong>Rules Matched:</strong>
+                                <ul style="margin: 5px 0; padding-left: 20px;">
+                                    ${movie.rulesMatched.map(rule => `<li>${rule}</li>`).join('')}
+                                </ul>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+
+            rulesApplied.innerHTML = `
+                <h4 style="margin-top: 30px;">Inference Engine Rules</h4>
+                <table>
+                    <tr><th>Rule</th><th>Points</th><th>Description</th></tr>
+                    <tr><td>Genre Match</td><td>+50</td><td>Primary genre matches preference</td></tr>
+                    <tr><td>Mood Match</td><td>+30</td><td>Movie mood matches user mood</td></tr>
+                    <tr><td>Duration Match</td><td>+15</td><td>Duration category matches preference</td></tr>
+                    <tr><td>High Rating</td><td>+10</td><td>Rating ≥ 8.5</td></tr>
+                    <tr><td>Good Rating</td><td>+5</td><td>Rating ≥ 8.0</td></tr>
+                    <tr><td>Synergy Bonus</td><td>+10</td><td>Genre-mood combination boost</td></tr>
+                </table>
+            `;
+        }
+    </script>
+</body>
+</html>

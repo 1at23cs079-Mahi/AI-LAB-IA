@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Problem 1: Robot Vacuum Path Optimization</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <style>
+        body { background: #0a0e27; }
+        .problem-container { background: linear-gradient(135deg, #1a1f3a 0%, #0f1729 100%); border: 2px solid #00d4ff; box-shadow: 0 0 30px rgba(0, 212, 255, 0.3); }
+        .back-button { background: #00d4ff; color: #0a0e27; }
+        .back-button:hover { background: #00bfe6; }
+        .problem-header { border-bottom: 3px solid #00d4ff; }
+        .problem-header h1 { color: #00d4ff; text-shadow: 0 0 10px rgba(0, 212, 255, 0.5); }
+        .problem-header .description { color: #a0b5c7; }
+        .controls { background: linear-gradient(135deg, #1e2642 0%, #161b2e 100%); border: 1px solid #00d4ff; }
+        .controls h3 { color: #00d4ff; }
+        .btn { background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%); }
+        .btn:hover { transform: scale(1.05); box-shadow: 0 0 20px rgba(0, 212, 255, 0.5); }
+        .btn-secondary { background: #2a3550; color: #00d4ff; border: 2px solid #00d4ff; }
+        .output { background: #1a1f3a; border: 2px solid #00d4ff; }
+        .output h3 { color: #00d4ff; }
+        .cell { border: 2px solid #00d4ff; background: #0f1729; color: #00d4ff; }
+        .cell.start { background: #00d4ff; color: #0a0e27; }
+        .cell.goal { background: #ff0080; color: white; }
+        .cell.path { background: #00ff88; color: #0a0e27; }
+        .cell.obstacle { background: #2a3550; }
+    </style>
+    <div class="problem-container">
+        <a href="index.html" class="back-button">← Back to Home</a>
+        
+        <div class="problem-header">
+            <h1>🤖 Problem 1: Robot Vacuum Path Optimization</h1>
+            <p class="description">
+                Implement Uniform Cost Search to find the shortest cleaning route that covers all reachable tiles exactly once in a 5×5 room with obstacles.
+            </p>
+        </div>
+
+        <div class="controls">
+            <h3>Configure Room</h3>
+            <div class="control-group">
+                <label>Click cells to toggle obstacles (black = obstacle, green = start, red = goal):</label>
+                <div id="gridSetup" class="visualization"></div>
+            </div>
+            <button class="btn" onclick="solveUCS()">Find Optimal Path (UCS)</button>
+            <button class="btn btn-secondary" onclick="resetGrid()">Reset Grid</button>
+            <button class="btn btn-secondary" onclick="randomObstacles()">Random Obstacles</button>
+        </div>
+
+        <div id="output" class="output" style="display:none;">
+            <h3>Results</h3>
+            <div id="resultContent"></div>
+            <div class="visualization">
+                <div id="solutionGrid"></div>
+            </div>
+            <div class="stats" id="stats"></div>
+        </div>
+    </div>
+
+    <script>
+        const GRID_SIZE = 5;
+        let grid = [];
+        let start = {x: 0, y: 0};
+        let goal = {x: 4, y: 4};
+
+        function initGrid() {
+            grid = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(0));
+            renderSetupGrid();
+        }
+
+        function renderSetupGrid() {
+            const container = document.getElementById('gridSetup');
+            container.innerHTML = '';
+            const gridDiv = document.createElement('div');
+            gridDiv.className = 'grid';
+            gridDiv.style.gridTemplateColumns = `repeat(${GRID_SIZE}, 1fr)`;
+            
+            for (let i = 0; i < GRID_SIZE; i++) {
+                for (let j = 0; j < GRID_SIZE; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.onclick = () => toggleCell(i, j);
+                    
+                    if (i === start.x && j === start.y) {
+                        cell.classList.add('start');
+                        cell.textContent = 'S';
+                    } else if (i === goal.x && j === goal.y) {
+                        cell.classList.add('goal');
+                        cell.textContent = 'G';
+                    } else if (grid[i][j] === 1) {
+                        cell.classList.add('obstacle');
+                        cell.textContent = '■';
+                    }
+                    
+                    gridDiv.appendChild(cell);
+                }
+            }
+            container.appendChild(gridDiv);
+        }
+
+        function toggleCell(x, y) {
+            if ((x === start.x && y === start.y) || (x === goal.x && y === goal.y)) return;
+            grid[x][y] = grid[x][y] === 0 ? 1 : 0;
+            renderSetupGrid();
+        }
+
+        function randomObstacles() {
+            grid = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(0));
+            const numObstacles = Math.floor(Math.random() * 8) + 3;
+            for (let i = 0; i < numObstacles; i++) {
+                const x = Math.floor(Math.random() * GRID_SIZE);
+                const y = Math.floor(Math.random() * GRID_SIZE);
+                if ((x !== start.x || y !== start.y) && (x !== goal.x || y !== goal.y)) {
+                    grid[x][y] = 1;
+                }
+            }
+            renderSetupGrid();
+        }
+
+        function resetGrid() {
+            initGrid();
+            document.getElementById('output').style.display = 'none';
+        }
+
+        class PriorityQueue {
+            constructor() {
+                this.items = [];
+            }
+            
+            enqueue(element, priority) {
+                this.items.push({element, priority});
+                this.items.sort((a, b) => a.priority - b.priority);
+            }
+            
+            dequeue() {
+                return this.items.shift();
+            }
+            
+            isEmpty() {
+                return this.items.length === 0;
+            }
+        }
+
+        function uniformCostSearch() {
+            const directions = [[0,1], [1,0], [0,-1], [-1,0]];
+            const pq = new PriorityQueue();
+            const visited = new Set();
+            const parent = {};
+            const cost = {};
+            
+            const startKey = `${start.x},${start.y}`;
+            const goalKey = `${goal.x},${goal.y}`;
+            
+            pq.enqueue(startKey, 0);
+            cost[startKey] = 0;
+            parent[startKey] = null;
+            
+            let nodesExplored = 0;
+            
+            while (!pq.isEmpty()) {
+                const {element: current, priority: currentCost} = pq.dequeue();
+                
+                if (visited.has(current)) continue;
+                visited.add(current);
+                nodesExplored++;
+                
+                if (current === goalKey) {
+                    // Reconstruct path
+                    const path = [];
+                    let node = current;
+                    while (node !== null) {
+                        const [x, y] = node.split(',').map(Number);
+                        path.unshift({x, y});
+                        node = parent[node];
+                    }
+                    return {path, cost: currentCost, nodesExplored, visited: Array.from(visited)};
+                }
+                
+                const [x, y] = current.split(',').map(Number);
+                
+                for (const [dx, dy] of directions) {
+                    const nx = x + dx;
+                    const ny = y + dy;
+                    const nextKey = `${nx},${ny}`;
+                    
+                    if (nx >= 0 && nx < GRID_SIZE && ny >= 0 && ny < GRID_SIZE && 
+                        grid[nx][ny] === 0 && !visited.has(nextKey)) {
+                        const newCost = currentCost + 1;
+                        
+                        if (!(nextKey in cost) || newCost < cost[nextKey]) {
+                            cost[nextKey] = newCost;
+                            parent[nextKey] = current;
+                            pq.enqueue(nextKey, newCost);
+                        }
+                    }
+                }
+            }
+            
+            return null; // No path found
+        }
+
+        function solveUCS() {
+            const result = uniformCostSearch();
+            const output = document.getElementById('output');
+            const resultContent = document.getElementById('resultContent');
+            const solutionGrid = document.getElementById('solutionGrid');
+            const stats = document.getElementById('stats');
+            
+            output.style.display = 'block';
+            
+            if (result) {
+                resultContent.innerHTML = `
+                    <div class="alert alert-success">
+                        ✓ Path found successfully! Total cost: ${result.cost} steps
+                    </div>
+                `;
+                
+                // Render solution grid
+                const gridDiv = document.createElement('div');
+                gridDiv.className = 'grid';
+                gridDiv.style.gridTemplateColumns = `repeat(${GRID_SIZE}, 1fr)`;
+                
+                const pathSet = new Set(result.path.map(p => `${p.x},${p.y}`));
+                const visitedSet = new Set(result.visited);
+                
+                for (let i = 0; i < GRID_SIZE; i++) {
+                    for (let j = 0; j < GRID_SIZE; j++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'cell';
+                        const key = `${i},${j}`;
+                        
+                        if (i === start.x && j === start.y) {
+                            cell.classList.add('start');
+                            cell.textContent = 'S';
+                        } else if (i === goal.x && j === goal.y) {
+                            cell.classList.add('goal');
+                            cell.textContent = 'G';
+                        } else if (grid[i][j] === 1) {
+                            cell.classList.add('obstacle');
+                            cell.textContent = '■';
+                        } else if (pathSet.has(key)) {
+                            cell.classList.add('path');
+                            cell.textContent = '→';
+                        } else if (visitedSet.has(key)) {
+                            cell.classList.add('visited');
+                        }
+                        
+                        gridDiv.appendChild(cell);
+                    }
+                }
+                
+                solutionGrid.innerHTML = '';
+                solutionGrid.appendChild(gridDiv);
+                
+                stats.innerHTML = `
+                    <div class="stat-card">
+                        <div class="label">Path Length</div>
+                        <div class="value">${result.path.length}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">Total Cost</div>
+                        <div class="value">${result.cost}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">Nodes Explored</div>
+                        <div class="value">${result.nodesExplored}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">Algorithm</div>
+                        <div class="value" style="font-size:1.2rem">UCS</div>
+                    </div>
+                `;
+            } else {
+                resultContent.innerHTML = `
+                    <div class="alert alert-error">
+                        ✗ No path found! The goal is unreachable from the start position.
+                    </div>
+                `;
+                solutionGrid.innerHTML = '';
+                stats.innerHTML = '';
+            }
+        }
+
+        initGrid();
+    </script>
+</body>
+</html>

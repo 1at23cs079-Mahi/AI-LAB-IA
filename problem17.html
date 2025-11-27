@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Problem 17: Job Skill Extractor</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <style>
+        body { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); }
+        .problem-container { background: white; border-left: 8px solid #0066cc; box-shadow: 0 20px 50px rgba(0, 102, 204, 0.3); }
+        .back-button { background: #0066cc; color: white; border-radius: 5px; font-weight: 600; text-transform: uppercase; }
+        .back-button:hover { background: #0052a3; }
+        .problem-header { border-bottom: 3px solid #0066cc; background: linear-gradient(135deg, #f0f4f8 0%, #d9e2ec 100%); }
+        .problem-header h1 { color: #102a43; font-weight: 700; }
+        .problem-header .description { color: #486581; }
+        .controls { background: #f7fafc; border: 3px solid #bcccdc; }
+        .controls h3 { color: #102a43; font-weight: 600; }
+        .controls label { color: #486581; font-weight: 500; }
+        .btn { background: linear-gradient(135deg, #0066cc 0%, #0052a3 100%); border-radius: 5px; font-weight: 600; text-transform: uppercase; }
+        .btn:hover { background: linear-gradient(135deg, #0052a3 0%, #004085 100%); }
+        .btn-secondary { background: white; color: #0066cc; border: 2px solid #0066cc; }
+        input, textarea, select { border: 2px solid #bcccdc; }
+        .output { background: #f7fafc; border: 3px solid #0066cc; }
+    </style>
+    <div class="problem-container">
+        <a href="index.html" class="back-button">← Back to Home</a>
+        
+        <div class="problem-header">
+            <h1>💼 Problem 17: Job Skill Extractor</h1>
+            <p class="description">
+                Extract required and preferred skills from job postings and identify common patterns.
+            </p>
+        </div>
+
+        <div class="controls">
+            <h3>Add Job Postings</h3>
+            <div class="control-group">
+                <label>Job Title:</label>
+                <input type="text" id="jobTitle" placeholder="e.g., Senior Software Engineer">
+            </div>
+            <div class="control-group">
+                <label>Job Description:</label>
+                <textarea id="jobDescription" placeholder="Paste job description here..."></textarea>
+            </div>
+            <button class="btn" onclick="addJobPosting()">Add Job Posting</button>
+            <button class="btn btn-secondary" onclick="loadSampleJobs()">Load Sample Jobs</button>
+            <button class="btn btn-secondary" onclick="clearJobs()">Clear All</button>
+        </div>
+
+        <div id="jobsList" class="output" style="display:none;">
+            <h3>Job Postings</h3>
+            <div id="jobsDisplay"></div>
+            <button class="btn" onclick="analyzeSkills()" style="margin-top: 15px;">Analyze Skills</button>
+        </div>
+
+        <div id="output" class="output" style="display:none;">
+            <h3>Skill Analysis</h3>
+            <div id="resultContent"></div>
+        </div>
+    </div>
+
+    <script>
+        let jobs = [];
+
+        const skillKeywords = {
+            technical: ['python', 'java', 'javascript', 'react', 'angular', 'node', 'sql', 'aws', 'azure', 'docker', 'kubernetes', 'git', 'agile', 'scrum', 'api', 'rest', 'microservices', 'ci/cd', 'devops', 'machine learning', 'ai', 'data', 'cloud'],
+            soft: ['communication', 'teamwork', 'leadership', 'problem solving', 'analytical', 'creative', 'collaborative', 'adaptable', 'organized', 'detail-oriented'],
+            experience: ['bachelor', 'master', 'degree', 'years', 'experience', 'senior', 'junior', 'mid-level']
+        };
+
+        function extractSkills(text) {
+            const lowerText = text.toLowerCase();
+            const found = {technical: [], soft: [], experience: []};
+
+            for (const [category, keywords] of Object.entries(skillKeywords)) {
+                keywords.forEach(skill => {
+                    if (lowerText.includes(skill)) {
+                        found[category].push(skill);
+                    }
+                });
+            }
+
+            return found;
+        }
+
+        function addJobPosting() {
+            const title = document.getElementById('jobTitle').value.trim();
+            const description = document.getElementById('jobDescription').value.trim();
+
+            if (!title || !description) {
+                alert('Please fill both fields');
+                return;
+            }
+
+            jobs.push({id: Date.now(), title, description});
+            document.getElementById('jobTitle').value = '';
+            document.getElementById('jobDescription').value = '';
+            updateJobsList();
+        }
+
+        function loadSampleJobs() {
+            jobs = [
+                {
+                    id: 1,
+                    title: "Senior Software Engineer",
+                    description: "We're looking for a Senior Software Engineer with 5+ years experience in Python and Java. Must have strong problem solving skills, experience with AWS and Docker. Bachelor's degree required. Strong communication and teamwork abilities essential. Knowledge of microservices and CI/CD pipelines preferred."
+                },
+                {
+                    id: 2,
+                    title: "Full Stack Developer",
+                    description: "Seeking Full Stack Developer with experience in React, Node.js, and SQL databases. 3+ years of experience required. Must be detail-oriented and collaborative. Experience with Agile/Scrum methodologies. Knowledge of REST APIs and cloud services (Azure or AWS) is a plus."
+                },
+                {
+                    id: 3,
+                    title: "Data Scientist",
+                    description: "Looking for Data Scientist with strong analytical skills and experience in Python, machine learning, and AI. Master's degree preferred. Must have problem solving abilities and be adaptable. Experience with cloud platforms and data visualization tools required. 2+ years experience."
+                },
+                {
+                    id: 4,
+                    title: "DevOps Engineer",
+                    description: "DevOps Engineer needed with expertise in Kubernetes, Docker, and CI/CD pipelines. Strong leadership and communication skills required. Experience with AWS or Azure, Git, and microservices architecture. Bachelor's degree and 4+ years experience. Must be organized and detail-oriented."
+                },
+                {
+                    id: 5,
+                    title: "Frontend Developer",
+                    description: "Frontend Developer role requiring expertise in React, JavaScript, and modern web technologies. 3+ years experience. Strong creative and analytical thinking. Experience with Agile development and API integration. Bachelor's degree preferred. Excellent teamwork and communication skills."
+                }
+            ];
+            updateJobsList();
+        }
+
+        function clearJobs() {
+            jobs = [];
+            updateJobsList();
+            document.getElementById('output').style.display = 'none';
+        }
+
+        function updateJobsList() {
+            const jobsList = document.getElementById('jobsList');
+            const jobsDisplay = document.getElementById('jobsDisplay');
+
+            if (jobs.length === 0) {
+                jobsList.style.display = 'none';
+                return;
+            }
+
+            jobsList.style.display = 'block';
+
+            jobsDisplay.innerHTML = `
+                <div style="max-height: 400px; overflow-y: auto;">
+                    ${jobs.map((job, i) => `
+                        <div style="background: white; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #667eea;">
+                            <h4 style="color: #333; margin-bottom: 8px;">${i + 1}. ${job.title}</h4>
+                            <p style="color: #666; font-size: 0.9rem;">${job.description.substring(0, 150)}...</p>
+                        </div>
+                    `).join('')}
+                </div>
+                <p style="margin-top: 15px; color: #666;">Total Job Postings: ${jobs.length}</p>
+            `;
+        }
+
+        function analyzeSkills() {
+            const allSkills = {technical: {}, soft: {}, experience: {}};
+
+            jobs.forEach(job => {
+                const skills = extractSkills(job.description);
+                Object.keys(skills).forEach(category => {
+                    skills[category].forEach(skill => {
+                        allSkills[category][skill] = (allSkills[category][skill] || 0) + 1;
+                    });
+                });
+            });
+
+            displayAnalysis(allSkills);
+        }
+
+        function displayAnalysis(allSkills) {
+            const output = document.getElementById('output');
+            const resultContent = document.getElementById('resultContent');
+
+            output.style.display = 'block';
+
+            const getTopSkills = (skills, count) => {
+                return Object.entries(skills)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, count);
+            };
+
+            const topTechnical = getTopSkills(allSkills.technical, 10);
+            const topSoft = getTopSkills(allSkills.soft, 8);
+            const topExperience = getTopSkills(allSkills.experience, 5);
+
+            resultContent.innerHTML = `
+                <div class="alert alert-success">
+                    ✓ Analyzed ${jobs.length} job postings successfully!
+                </div>
+
+                <div style="background: white; padding: 25px; border-radius: 10px; margin: 20px 0;">
+                    <h3 style="color: #667eea; margin-bottom: 20px;">🔧 Technical Skills</h3>
+                    ${topTechnical.length > 0 ? `
+                        ${topTechnical.map(([skill, count]) => {
+                            const percentage = (count / jobs.length * 100).toFixed(0);
+                            return `
+                                <div style="margin: 15px 0;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                        <strong>${skill}</strong>
+                                        <span style="color: #666;">${count}/${jobs.length} jobs (${percentage}%)</span>
+                                    </div>
+                                    <div style="background: #e0e0e0; height: 25px; border-radius: 12px; overflow: hidden;">
+                                        <div style="background: linear-gradient(90deg, #667eea, #764ba2); height: 100%; width: ${percentage}%; display: flex; align-items: center; padding-left: 10px; color: white; font-size: 0.9rem; font-weight: bold;">
+                                            ${percentage}%
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    ` : '<p>No technical skills found</p>'}
+                </div>
+
+                <div style="background: white; padding: 25px; border-radius: 10px; margin: 20px 0;">
+                    <h3 style="color: #2ecc71; margin-bottom: 20px;">💡 Soft Skills</h3>
+                    ${topSoft.length > 0 ? `
+                        ${topSoft.map(([skill, count]) => {
+                            const percentage = (count / jobs.length * 100).toFixed(0);
+                            return `
+                                <div style="margin: 15px 0;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                        <strong>${skill}</strong>
+                                        <span style="color: #666;">${count}/${jobs.length} jobs (${percentage}%)</span>
+                                    </div>
+                                    <div style="background: #e0e0e0; height: 25px; border-radius: 12px; overflow: hidden;">
+                                        <div style="background: #2ecc71; height: 100%; width: ${percentage}%; display: flex; align-items: center; padding-left: 10px; color: white; font-size: 0.9rem; font-weight: bold;">
+                                            ${percentage}%
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    ` : '<p>No soft skills found</p>'}
+                </div>
+
+                <div style="background: #f8f9fa; padding: 25px; border-radius: 10px; margin: 20px 0;">
+                    <h3 style="color: #e74c3c; margin-bottom: 15px;">📊 Key Insights & Skill Gap Analysis</h3>
+                    <ul style="line-height: 1.8;">
+                        <li><strong>Most In-Demand Technical Skill:</strong> ${topTechnical[0] ? topTechnical[0][0] : 'N/A'} (${topTechnical[0] ? topTechnical[0][1] : 0} postings)</li>
+                        <li><strong>Most Valued Soft Skill:</strong> ${topSoft[0] ? topSoft[0][0] : 'N/A'} (${topSoft[0] ? topSoft[0][1] : 0} postings)</li>
+                        <li><strong>Common Requirements:</strong> ${topExperience.map(([req]) => req).join(', ')}</li>
+                        <li><strong>Skill Diversity:</strong> ${Object.keys(allSkills.technical).length} unique technical skills found</li>
+                    </ul>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

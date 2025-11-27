@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Problem 19: Chatbot Builder</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <style>
+        body { background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%); }
+        .problem-container { background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%); color: #e5e7eb; border-radius: 30px; box-shadow: 0 25px 70px rgba(99, 102, 241, 0.5); }
+        .back-button { background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: white; border-radius: 50px; font-weight: 600; }
+        .back-button:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(139, 92, 246, 0.5); }
+        .problem-header { border-bottom: 4px solid #8b5cf6; background: linear-gradient(135deg, #312e81 0%, #3730a3 100%); margin: -40px -40px 30px -40px; padding: 40px; border-radius: 30px 30px 0 0; }
+        .problem-header h1 { color: #e0e7ff; font-weight: 700; }
+        .problem-header .description { color: #c7d2fe; }
+        .controls { background: rgba(55, 48, 163, 0.3); border: 3px solid #6366f1; border-radius: 20px; backdrop-filter: blur(10px); }
+        .controls h3 { color: #e0e7ff; font-weight: 600; }
+        .controls label { color: #c7d2fe; }
+        .btn { background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); border-radius: 25px; font-weight: 600; }
+        .btn:hover { background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%); transform: scale(1.05); }
+        .btn-secondary { background: transparent; color: #c7d2fe; border: 2px solid #8b5cf6; }
+        select, input, textarea { background: #1e1b4b; color: #e5e7eb; border: 2px solid #6366f1; }
+        .output { background: rgba(30, 27, 75, 0.5); border: 3px solid #6366f1; border-radius: 20px; color: #e5e7eb; backdrop-filter: blur(10px); }
+    </style>
+    <div class="problem-container">
+        <a href="index.html" class="back-button">← Back to Home</a>
+        
+        <div class="problem-header">
+            <h1>🤖 Problem 19: Topic-Specific Chatbot Builder</h1>
+            <p class="description">
+                Create and interact with a topic-specific chatbot with predefined knowledge and responses.
+            </p>
+        </div>
+
+        <div class="controls">
+            <h3>Chatbot Configuration</h3>
+            <div class="control-group">
+                <label>Select Chatbot Topic:</label>
+                <select id="chatbotTopic" onchange="loadChatbot()">
+                    <option value="movies">Movies & Cinema</option>
+                    <option value="sports">Sports</option>
+                    <option value="travel">Travel & Tourism</option>
+                    <option value="tech">Technology</option>
+                </select>
+            </div>
+            <button class="btn" onclick="loadChatbot()">Load Chatbot</button>
+        </div>
+
+        <div id="chatInterface" class="output" style="display:none;">
+            <h3 id="chatTitle">Chatbot</h3>
+            <div id="chatWindow" style="background: white; border-radius: 10px; padding: 20px; max-height: 400px; overflow-y: auto; margin: 20px 0;">
+                <!-- Chat messages will appear here -->
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="userInput" placeholder="Type your message..." style="flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 8px;" onkeypress="if(event.key==='Enter') sendMessage()">
+                <button class="btn" onclick="sendMessage()">Send</button>
+            </div>
+            <div style="margin-top: 15px;">
+                <strong>Try asking:</strong>
+                <div id="suggestions" style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
+                    <!-- Suggestions will appear here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const chatbots = {
+            movies: {
+                name: "Movie Buff Bot",
+                systemPrompt: "I'm a movie expert who loves discussing films, actors, and cinema.",
+                knowledge: {
+                    "what's your favorite movie": "I love many classics! The Shawshank Redemption, The Godfather, and Inception are all masterpieces. What genre do you prefer?",
+                    "recommend a movie": "What mood are you in? For action, try Mad Max: Fury Road. For drama, The Shawshank Redemption. For sci-fi, Blade Runner 2049!",
+                    "best director": "Christopher Nolan, Martin Scorsese, and Quentin Tarantino are all legendary directors with unique styles.",
+                    "latest movies": "Some great recent films include Dune, Everything Everywhere All at Once, and Top Gun: Maverick!",
+                    "who are you": "I'm Movie Buff Bot, your friendly cinema companion! I love discussing films, directors, and everything about movies."
+                },
+                suggestions: ["What's your favorite movie?", "Recommend a movie", "Who's the best director?", "What are the latest movies?"]
+            },
+            sports: {
+                name: "Sports Fan Bot",
+                systemPrompt: "I'm passionate about sports and love discussing games, players, and teams.",
+                knowledge: {
+                    "favorite sport": "I love all sports! Football, basketball, tennis, and cricket all have their unique excitement. What's your favorite?",
+                    "best player": "That depends on the sport! In football, Messi and Ronaldo are legends. In basketball, LeBron and MJ. In tennis, Federer, Nadal, and Djokovic.",
+                    "upcoming games": "There are always exciting matches happening! Check your local sports schedule for football, basketball, and other sports.",
+                    "sports rules": "Which sport would you like to learn about? I can explain the basic rules of most major sports!",
+                    "who are you": "I'm Sports Fan Bot! I'm here to discuss all things sports - players, teams, games, and more!"
+                },
+                suggestions: ["What's your favorite sport?", "Who's the best player?", "Explain sports rules", "Upcoming games"]
+            },
+            travel: {
+                name: "Travel Guide Bot",
+                systemPrompt: "I'm a travel enthusiast who loves exploring destinations and sharing travel tips.",
+                knowledge: {
+                    "best destinations": "Amazing destinations include Paris for culture, Bali for beaches, Tokyo for technology, and Iceland for nature. Where would you like to go?",
+                    "travel tips": "Pack light, research local customs, try local food, learn basic phrases, and always have backup plans!",
+                    "cheap travel": "Look for off-season deals, use budget airlines, stay in hostels, eat local street food, and use public transport!",
+                    "packing list": "Essentials: passport, chargers, medications, comfortable shoes, weather-appropriate clothes, and a good camera!",
+                    "who are you": "I'm Travel Guide Bot! I help with destination recommendations, travel tips, and planning your perfect trip!"
+                },
+                suggestions: ["Best destinations?", "Travel tips", "How to travel cheap?", "What should I pack?"]
+            },
+            tech: {
+                name: "Tech Expert Bot",
+                systemPrompt: "I'm a technology enthusiast who loves discussing gadgets, software, and innovations.",
+                knowledge: {
+                    "latest technology": "AI, quantum computing, 5G, electric vehicles, and renewable energy are transforming our world!",
+                    "best phone": "Current top phones include iPhone 15, Samsung Galaxy S24, and Google Pixel 8. It depends on your needs!",
+                    "learn programming": "Start with Python for beginners! It's versatile and has great learning resources. Try coding challenges on platforms like Codecademy.",
+                    "ai future": "AI is revolutionizing healthcare, transportation, education, and more. It'll assist humans while raising important ethical questions.",
+                    "who are you": "I'm Tech Expert Bot! I love discussing technology, gadgets, programming, and the digital future!"
+                },
+                suggestions: ["What's the latest technology?", "Best phone to buy?", "How to learn programming?", "Future of AI?"]
+            }
+        };
+
+        let currentBot = null;
+        let chatHistory = [];
+
+        function loadChatbot() {
+            const topic = document.getElementById('chatbotTopic').value;
+            currentBot = chatbots[topic];
+            chatHistory = [];
+
+            document.getElementById('chatInterface').style.display = 'block';
+            document.getElementById('chatTitle').textContent = currentBot.name;
+
+            const chatWindow = document.getElementById('chatWindow');
+            chatWindow.innerHTML = `
+                <div style="background: #e7f3ff; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+                    <strong>${currentBot.name}:</strong> ${currentBot.systemPrompt} How can I help you today?
+                </div>
+            `;
+
+            const suggestions = document.getElementById('suggestions');
+            suggestions.innerHTML = currentBot.suggestions.map(s => `
+                <button class="btn" style="padding: 8px 15px; font-size: 0.9rem;" onclick="askSuggestion('${s}')">${s}</button>
+            `).join('');
+        }
+
+        function askSuggestion(question) {
+            document.getElementById('userInput').value = question;
+            sendMessage();
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('userInput');
+            const message = input.value.trim();
+
+            if (!message || !currentBot) return;
+
+            const chatWindow = document.getElementById('chatWindow');
+
+            // Add user message
+            chatWindow.innerHTML += `
+                <div style="background: #667eea; color: white; padding: 12px; border-radius: 10px; margin: 10px 0; margin-left: 20%; text-align: right;">
+                    <strong>You:</strong> ${message}
+                </div>
+            `;
+
+            // Find response
+            let response = "I'm not sure about that. Try asking about something I know - check the suggestions below!";
+            
+            const lowerMessage = message.toLowerCase();
+            for (const [key, value] of Object.entries(currentBot.knowledge)) {
+                if (lowerMessage.includes(key) || key.includes(lowerMessage.split(' ')[0])) {
+                    response = value;
+                    break;
+                }
+            }
+
+            // Add bot response
+            setTimeout(() => {
+                chatWindow.innerHTML += `
+                    <div style="background: #f8f9fa; padding: 12px; border-radius: 10px; margin: 10px 0; margin-right: 20%; border-left: 4px solid #667eea;">
+                        <strong>${currentBot.name}:</strong> ${response}
+                    </div>
+                `;
+                chatWindow.scrollTop = chatWindow.scrollHeight;
+            }, 500);
+
+            input.value = '';
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+    </script>
+</body>
+</html>

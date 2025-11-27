@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Problem 4: Warehouse Item Retrieval</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <style>
+        body { background: linear-gradient(135deg, #f79d00 0%, #64f38c 100%); }
+        .problem-container { background: #2c2416; color: #f5f5f5; border: 3px solid #f79d00; }
+        .back-button { background: #f79d00; color: #2c2416; font-weight: bold; border-radius: 0; border: 3px solid #2c2416; }
+        .back-button:hover { background: #ff8c00; transform: skew(-5deg); }
+        .problem-header { border-bottom: 4px solid #f79d00; background: #3a2f1a; }
+        .problem-header h1 { color: #f79d00; font-family: 'Courier New', monospace; text-transform: uppercase; }
+        .problem-header .description { color: #d4d4d4; }
+        .controls { background: #3a2f1a; border: 2px solid #f79d00; }
+        .controls h3 { color: #f79d00; text-transform: uppercase; font-family: 'Courier New', monospace; }
+        .btn { background: #f79d00; color: #2c2416; border-radius: 0; font-weight: bold; border: 2px solid #2c2416; }
+        .btn:hover { background: #ffa500; }
+        .btn-secondary { background: #5c4d34; color: #f79d00; border: 2px solid #f79d00; }
+        .output { background: #3a2f1a; border: 3px solid #f79d00; color: #f5f5f5; }
+        .cell { background: #2c2416; border: 2px solid #f79d00; color: #f79d00; }
+        .visualization { background: #2c2416; border: 2px solid #f79d00; }
+    </style>
+    <div class="problem-container">
+        <a href="index.html" class="back-button">← Back to Home</a>
+        
+        <div class="problem-header">
+            <h1>📦 Problem 4: Warehouse Item Retrieval</h1>
+            <p class="description">
+                Compare A* vs Greedy Best-First Search for picking three items from different racks and returning to base.
+            </p>
+        </div>
+
+        <div class="controls">
+            <h3>Warehouse Configuration</h3>
+            <div class="control-group">
+                <label>Click on grid to set: Base (B), Items (1,2,3), Obstacles (X)</label>
+                <div id="gridSetup" class="visualization"></div>
+            </div>
+            <button class="btn" onclick="solveAStar()">Solve with A*</button>
+            <button class="btn" onclick="solveGreedy()">Solve with Greedy Best-First</button>
+            <button class="btn" onclick="compareAlgorithms()">Compare Both</button>
+            <button class="btn btn-secondary" onclick="resetWarehouse()">Reset</button>
+        </div>
+
+        <div id="output" class="output" style="display:none;">
+            <h3>Results</h3>
+            <div id="resultContent"></div>
+            <div class="visualization">
+                <div id="solutionGrid"></div>
+            </div>
+            <div class="stats" id="stats"></div>
+        </div>
+    </div>
+
+    <script>
+        const SIZE = 8;
+        let grid = [];
+        let base = {x: 0, y: 0};
+        let items = [{x: 2, y: 5}, {x: 5, y: 2}, {x: 7, y: 6}];
+        let mode = 'obstacle';
+
+        function initGrid() {
+            grid = Array(SIZE).fill(null).map(() => Array(SIZE).fill(0));
+            grid[2][3] = grid[4][4] = grid[5][1] = grid[6][5] = 1; // Obstacles
+            renderGrid();
+        }
+
+        function renderGrid() {
+            const container = document.getElementById('gridSetup');
+            container.innerHTML = `
+                <div style="margin-bottom: 10px;">
+                    <button class="btn" style="padding: 5px 10px;" onclick="mode='base'">Set Base (B)</button>
+                    <button class="btn" style="padding: 5px 10px;" onclick="mode='item1'">Set Item 1</button>
+                    <button class="btn" style="padding: 5px 10px;" onclick="mode='item2'">Set Item 2</button>
+                    <button class="btn" style="padding: 5px 10px;" onclick="mode='item3'">Set Item 3</button>
+                    <button class="btn btn-secondary" style="padding: 5px 10px;" onclick="mode='obstacle'">Toggle Obstacle</button>
+                </div>
+            `;
+            const gridDiv = document.createElement('div');
+            gridDiv.className = 'grid';
+            gridDiv.style.gridTemplateColumns = `repeat(${SIZE}, 1fr)`;
+            
+            for (let i = 0; i < SIZE; i++) {
+                for (let j = 0; j < SIZE; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.style.width = '40px';
+                    cell.style.height = '40px';
+                    cell.onclick = () => handleCellClick(i, j);
+                    
+                    if (i === base.x && j === base.y) {
+                        cell.style.background = '#3498db';
+                        cell.textContent = 'B';
+                        cell.style.color = 'white';
+                    } else {
+                        const itemIdx = items.findIndex(it => it.x === i && it.y === j);
+                        if (itemIdx !== -1) {
+                            cell.style.background = '#f39c12';
+                            cell.textContent = (itemIdx + 1).toString();
+                            cell.style.color = 'white';
+                        } else if (grid[i][j] === 1) {
+                            cell.classList.add('obstacle');
+                            cell.textContent = 'X';
+                        }
+                    }
+                    
+                    gridDiv.appendChild(cell);
+                }
+            }
+            container.appendChild(gridDiv);
+        }
+
+        function handleCellClick(x, y) {
+            if (mode === 'base') {
+                base = {x, y};
+            } else if (mode === 'item1') {
+                items[0] = {x, y};
+            } else if (mode === 'item2') {
+                items[1] = {x, y};
+            } else if (mode === 'item3') {
+                items[2] = {x, y};
+            } else {
+                grid[x][y] = grid[x][y] === 0 ? 1 : 0;
+            }
+            renderGrid();
+        }
+
+        function manhattan(p1, p2) {
+            return Math.abs(p1.x - p2.x) + Math.abs(p1.y - p2.y);
+        }
+
+        function findPath(start, goal, heuristic = 'astar') {
+            const pq = [{pos: start, g: 0, h: manhattan(start, goal), path: [start]}];
+            const visited = new Set();
+            let nodesExplored = 0;
+
+            while (pq.length > 0) {
+                pq.sort((a, b) => {
+                    if (heuristic === 'greedy') return a.h - b.h;
+                    return (a.g + a.h) - (b.g + b.h);
+                });
+                
+                const current = pq.shift();
+                const key = `${current.pos.x},${current.pos.y}`;
+                
+                if (visited.has(key)) continue;
+                visited.add(key);
+                nodesExplored++;
+
+                if (current.pos.x === goal.x && current.pos.y === goal.y) {
+                    return {path: current.path, cost: current.g, nodesExplored};
+                }
+
+                const dirs = [[0,1], [1,0], [0,-1], [-1,0]];
+                for (const [dx, dy] of dirs) {
+                    const nx = current.pos.x + dx;
+                    const ny = current.pos.y + dy;
+                    const nkey = `${nx},${ny}`;
+
+                    if (nx >= 0 && nx < SIZE && ny >= 0 && ny < SIZE && 
+                        grid[nx][ny] === 0 && !visited.has(nkey)) {
+                        pq.push({
+                            pos: {x: nx, y: ny},
+                            g: current.g + 1,
+                            h: manhattan({x: nx, y: ny}, goal),
+                            path: [...current.path, {x: nx, y: ny}]
+                        });
+                    }
+                }
+            }
+            return null;
+        }
+
+        function solveMultiGoal(heuristic) {
+            // Find order: Base -> Item1 -> Item2 -> Item3 -> Base
+            const goals = [items[0], items[1], items[2], base];
+            let currentPos = base;
+            let totalPath = [];
+            let totalCost = 0;
+            let totalNodes = 0;
+
+            for (const goal of goals) {
+                const result = findPath(currentPos, goal, heuristic);
+                if (!result) return null;
+                
+                totalPath = totalPath.concat(result.path.slice(1));
+                totalCost += result.cost;
+                totalNodes += result.nodesExplored;
+                currentPos = goal;
+            }
+
+            return {path: [base, ...totalPath], cost: totalCost, nodesExplored: totalNodes};
+        }
+
+        function solveAStar() {
+            const result = solveMultiGoal('astar');
+            displayResult(result, 'A* Algorithm');
+        }
+
+        function solveGreedy() {
+            const result = solveMultiGoal('greedy');
+            displayResult(result, 'Greedy Best-First');
+        }
+
+        function compareAlgorithms() {
+            const astar = solveMultiGoal('astar');
+            const greedy = solveMultiGoal('greedy');
+            
+            const output = document.getElementById('output');
+            const resultContent = document.getElementById('resultContent');
+            const stats = document.getElementById('stats');
+            
+            output.style.display = 'block';
+            
+            resultContent.innerHTML = `
+                <div class="alert alert-success">
+                    ✓ Comparison Complete!
+                </div>
+                <table>
+                    <tr><th>Algorithm</th><th>Path Cost</th><th>Nodes Explored</th><th>Winner</th></tr>
+                    <tr>
+                        <td>A*</td>
+                        <td>${astar.cost}</td>
+                        <td>${astar.nodesExplored}</td>
+                        <td>${astar.cost <= greedy.cost ? '✓ Optimal' : ''}</td>
+                    </tr>
+                    <tr>
+                        <td>Greedy Best-First</td>
+                        <td>${greedy.cost}</td>
+                        <td>${greedy.nodesExplored}</td>
+                        <td>${greedy.cost < astar.cost ? '✓ Faster' : ''}</td>
+                    </tr>
+                </table>
+            `;
+
+            stats.innerHTML = `
+                <div class="stat-card">
+                    <div class="label">A* Cost</div>
+                    <div class="value">${astar.cost}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Greedy Cost</div>
+                    <div class="value">${greedy.cost}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">A* Nodes</div>
+                    <div class="value">${astar.nodesExplored}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Greedy Nodes</div>
+                    <div class="value">${greedy.nodesExplored}</div>
+                </div>
+            `;
+            
+            document.getElementById('solutionGrid').innerHTML = '';
+        }
+
+        function displayResult(result, alg) {
+            if (!result) {
+                alert('No path found!');
+                return;
+            }
+
+            const output = document.getElementById('output');
+            const resultContent = document.getElementById('resultContent');
+            const stats = document.getElementById('stats');
+            
+            output.style.display = 'block';
+            
+            resultContent.innerHTML = `<div class="alert alert-success">✓ ${alg} found path!</div>`;
+
+            stats.innerHTML = `
+                <div class="stat-card">
+                    <div class="label">Total Cost</div>
+                    <div class="value">${result.cost}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Path Length</div>
+                    <div class="value">${result.path.length}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Nodes Explored</div>
+                    <div class="value">${result.nodesExplored}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Algorithm</div>
+                    <div class="value" style="font-size:1.1rem">${alg}</div>
+                </div>
+            `;
+
+            document.getElementById('solutionGrid').innerHTML = '';
+        }
+
+        function resetWarehouse() {
+            initGrid();
+            document.getElementById('output').style.display = 'none';
+        }
+
+        initGrid();
+    </script>
+</body>
+</html>

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Problem 7: Mobile Autocorrect</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <style>
+        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%); }
+        .problem-container { background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(10px); border-radius: 25px; }
+        .back-button { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; }
+        .back-button:hover { background: linear-gradient(135deg, #764ba2 0%, #f093fb 100%); }
+        .problem-header { border-bottom: 3px solid transparent; background: linear-gradient(white, white) padding-box, linear-gradient(135deg, #667eea, #764ba2, #f093fb) border-box; border-bottom: 3px solid transparent; }
+        .problem-header h1 { background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .controls { background: linear-gradient(135deg, #f6f9fc 0%, #ffffff 100%); border: 2px solid #667eea; box-shadow: 0 5px 20px rgba(102, 126, 234, 0.2); }
+        .btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; }
+        .btn:hover { background: linear-gradient(135deg, #764ba2 0%, #f093fb 100%); transform: scale(1.05); }
+        input, textarea { border: 2px solid #e0e7ff; border-radius: 10px; transition: all 0.3s; }
+        input:focus, textarea:focus { border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+    </style>
+    <div class="problem-container">
+        <a href="index.html" class="back-button">← Back to Home</a>
+        
+        <div class="problem-header">
+            <h1>📱 Problem 7: Mobile Phone Autocorrect</h1>
+            <p class="description">
+                Compute edit distances and generate top-3 suggestions using heuristic ranking.
+            </p>
+        </div>
+
+        <div class="controls">
+            <h3>Autocorrect Settings</h3>
+            <div class="control-group">
+                <label>Enter misspelled word:</label>
+                <input type="text" id="inputWord" placeholder="e.g., recieve" oninput="getSuggestions()">
+            </div>
+            <div class="control-group">
+                <label>Dictionary (one word per line):</label>
+                <textarea id="dictionary">receive
+believe
+achieve
+receipt
+deceive
+conceive
+perceive
+receiver
+received
+receiving
+because
+before
+between
+become
+beautiful</textarea>
+            </div>
+            <button class="btn" onclick="getSuggestions()">Get Suggestions</button>
+            <button class="btn btn-secondary" onclick="loadCommonWords()">Load Common Words</button>
+        </div>
+
+        <div id="output" class="output" style="display:none;">
+            <h3>Autocorrect Suggestions</h3>
+            <div id="resultContent"></div>
+            <div id="detailsTable"></div>
+        </div>
+    </div>
+
+    <script>
+        function levenshteinDistance(str1, str2) {
+            const m = str1.length;
+            const n = str2.length;
+            const dp = Array(m + 1).fill(null).map(() => Array(n + 1).fill(0));
+
+            for (let i = 0; i <= m; i++) dp[i][0] = i;
+            for (let j = 0; j <= n; j++) dp[0][j] = j;
+
+            for (let i = 1; i <= m; i++) {
+                for (let j = 1; j <= n; j++) {
+                    if (str1[i-1] === str2[j-1]) {
+                        dp[i][j] = dp[i-1][j-1];
+                    } else {
+                        dp[i][j] = Math.min(
+                            dp[i-1][j] + 1,    // deletion
+                            dp[i][j-1] + 1,    // insertion
+                            dp[i-1][j-1] + 1   // substitution
+                        );
+                    }
+                }
+            }
+            return dp[m][n];
+        }
+
+        function calculateScore(word, input, distance) {
+            let score = -distance * 10; // Lower distance is better
+            
+            // Bonus if starts with same letter
+            if (word[0] === input[0]) score += 5;
+            
+            // Bonus for similar length
+            const lengthDiff = Math.abs(word.length - input.length);
+            score -= lengthDiff * 2;
+            
+            // Bonus for common prefix
+            let commonPrefix = 0;
+            for (let i = 0; i < Math.min(word.length, input.length); i++) {
+                if (word[i] === input[i]) commonPrefix++;
+                else break;
+            }
+            score += commonPrefix * 3;
+            
+            return score;
+        }
+
+        function getSuggestions() {
+            const input = document.getElementById('inputWord').value.trim().toLowerCase();
+            const dictionary = document.getElementById('dictionary').value
+                .split('\n')
+                .map(w => w.trim().toLowerCase())
+                .filter(w => w.length > 0);
+
+            if (!input) {
+                document.getElementById('output').style.display = 'none';
+                return;
+            }
+
+            const suggestions = dictionary.map(word => {
+                const distance = levenshteinDistance(input, word);
+                const score = calculateScore(word, input, distance);
+                return {word, distance, score};
+            });
+
+            suggestions.sort((a, b) => b.score - a.score);
+            const top3 = suggestions.slice(0, 3);
+
+            displaySuggestions(input, top3, suggestions);
+        }
+
+        function displaySuggestions(input, top3, all) {
+            const output = document.getElementById('output');
+            const resultContent = document.getElementById('resultContent');
+            const detailsTable = document.getElementById('detailsTable');
+            
+            output.style.display = 'block';
+
+            resultContent.innerHTML = `
+                <div class="alert alert-success">
+                    <strong>Input:</strong> "${input}" <br>
+                    <strong>Top Suggestions:</strong>
+                    <ol style="margin-top: 10px; font-size: 1.2rem;">
+                        ${top3.map(s => `<li><strong>${s.word}</strong> (distance: ${s.distance}, score: ${s.score})</li>`).join('')}
+                    </ol>
+                </div>
+            `;
+
+            detailsTable.innerHTML = `
+                <h4 style="margin-top: 20px;">All Candidates (sorted by score)</h4>
+                <table>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Word</th>
+                        <th>Edit Distance</th>
+                        <th>Heuristic Score</th>
+                    </tr>
+                    ${all.slice(0, 10).map((s, i) => `
+                        <tr style="${i < 3 ? 'background: #d4edda;' : ''}">
+                            <td>${i + 1}</td>
+                            <td><strong>${s.word}</strong></td>
+                            <td>${s.distance}</td>
+                            <td>${s.score}</td>
+                        </tr>
+                    `).join('')}
+                </table>
+            `;
+        }
+
+        function loadCommonWords() {
+            document.getElementById('dictionary').value = `the
+be
+to
+of
+and
+in
+that
+have
+it
+for
+not
+on
+with
+as
+you
+do
+at
+this
+but
+from
+they
+say
+her
+she
+or
+an
+will
+my
+one
+all
+would
+there
+their
+what
+so
+up
+out
+if
+about
+who
+get
+which
+go
+me`;
+        }
+    </script>
+</body>
+</html>

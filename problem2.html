@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Problem 2: Drone Altitude Control</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <style>
+        body { background: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%); }
+        .problem-container { background: rgba(255, 255, 255, 0.95); border-radius: 30px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4); }
+        .back-button { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: 25px; font-weight: bold; }
+        .back-button:hover { transform: scale(1.1) rotate(-2deg); }
+        .problem-header { border-bottom: 4px dashed #8e2de2; }
+        .problem-header h1 { background: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .controls { background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); border-radius: 20px; border: 3px solid #8e2de2; }
+        .controls h3 { color: #4a00e0; }
+        .btn { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: 25px; font-weight: bold; text-transform: uppercase; }
+        .btn:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(240, 147, 251, 0.4); }
+        .output { background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%); border-radius: 20px; }
+        canvas { border-radius: 15px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2); }
+    </style>
+    <div class="problem-container">
+        <a href="index.html" class="back-button">← Back to Home</a>
+        
+        <div class="problem-header">
+            <h1>🚁 Problem 2: Autonomous Drone Altitude Adjustment</h1>
+            <p class="description">
+                Reflex agent and model-based agent that stabilize a drone to stay within altitude [4,6] with minimal adjustments against wind disturbances.
+            </p>
+        </div>
+
+        <div class="controls">
+            <h3>Simulation Settings</h3>
+            <div class="control-group">
+                <label>Initial Altitude (0-10):</label>
+                <input type="number" id="initialAlt" min="0" max="10" value="5">
+            </div>
+            <div class="control-group">
+                <label>Wind Intensity (0-3):</label>
+                <input type="range" id="windIntensity" min="0" max="3" value="2">
+                <span id="windValue">2</span>
+            </div>
+            <div class="control-group">
+                <label>Simulation Steps:</label>
+                <input type="number" id="steps" min="10" max="100" value="30">
+            </div>
+            <button class="btn" onclick="runReflexAgent()">Run Reflex Agent</button>
+            <button class="btn" onclick="runModelBasedAgent()">Run Model-Based Agent</button>
+            <button class="btn btn-secondary" onclick="compareAgents()">Compare Both</button>
+        </div>
+
+        <div id="output" class="output" style="display:none;">
+            <h3>Simulation Results</h3>
+            <div id="resultContent"></div>
+            <div class="visualization">
+                <canvas id="altitudeChart" width="800" height="300"></canvas>
+            </div>
+            <div class="stats" id="stats"></div>
+        </div>
+    </div>
+
+    <script>
+        const TARGET_MIN = 4;
+        const TARGET_MAX = 6;
+        
+        document.getElementById('windIntensity').oninput = function() {
+            document.getElementById('windValue').textContent = this.value;
+        };
+
+        class ReflexAgent {
+            decide(altitude) {
+                if (altitude < TARGET_MIN) return 1; // Move up
+                if (altitude > TARGET_MAX) return -1; // Move down
+                return 0; // Stay
+            }
+        }
+
+        class ModelBasedAgent {
+            constructor() {
+                this.history = [];
+                this.predictedWind = 0;
+            }
+            
+            updateModel(altitude, wind) {
+                this.history.push({altitude, wind});
+                if (this.history.length > 5) {
+                    this.history.shift();
+                }
+                // Predict wind based on recent history
+                if (this.history.length > 0) {
+                    const avgWind = this.history.reduce((sum, h) => sum + h.wind, 0) / this.history.length;
+                    this.predictedWind = avgWind;
+                }
+            }
+            
+            decide(altitude) {
+                const futureAlt = altitude + this.predictedWind;
+                
+                // Proactive adjustment
+                if (futureAlt < TARGET_MIN - 0.5) return 2; // Strong up
+                if (futureAlt < TARGET_MIN) return 1; // Move up
+                if (futureAlt > TARGET_MAX + 0.5) return -2; // Strong down
+                if (futureAlt > TARGET_MAX) return -1; // Move down
+                
+                // Fine tuning
+                if (altitude < TARGET_MIN + 0.5) return 0.5;
+                if (altitude > TARGET_MAX - 0.5) return -0.5;
+                
+                return 0; // Stay
+            }
+        }
+
+        function simulateWind(intensity) {
+            return (Math.random() - 0.5) * intensity * 2;
+        }
+
+        function runSimulation(agent, initialAlt, windIntensity, steps) {
+            const history = [];
+            let altitude = initialAlt;
+            let adjustments = 0;
+            let inBandCount = 0;
+            
+            for (let i = 0; i < steps; i++) {
+                const wind = simulateWind(windIntensity);
+                
+                if (agent instanceof ModelBasedAgent) {
+                    agent.updateModel(altitude, wind);
+                }
+                
+                const action = agent.decide(altitude);
+                
+                if (action !== 0) adjustments++;
+                
+                altitude += wind + action;
+                altitude = Math.max(0, Math.min(10, altitude)); // Clamp to [0,10]
+                
+                if (altitude >= TARGET_MIN && altitude <= TARGET_MAX) {
+                    inBandCount++;
+                }
+                
+                history.push({step: i, altitude, wind, action});
+            }
+            
+            return {
+                history,
+                adjustments,
+                inBandCount,
+                inBandPercentage: (inBandCount / steps * 100).toFixed(1),
+                avgAdjustment: (adjustments / steps).toFixed(2)
+            };
+        }
+
+        function drawChart(canvas, data, title) {
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+            const padding = 40;
+            
+            ctx.clearRect(0, 0, width, height);
+            
+            // Background
+            ctx.fillStyle = '#f8f9fa';
+            ctx.fillRect(0, 0, width, height);
+            
+            // Target band
+            ctx.fillStyle = 'rgba(46, 204, 113, 0.2)';
+            const minY = height - padding - (TARGET_MIN / 10) * (height - 2 * padding);
+            const maxY = height - padding - (TARGET_MAX / 10) * (height - 2 * padding);
+            ctx.fillRect(padding, maxY, width - 2 * padding, minY - maxY);
+            
+            // Grid
+            ctx.strokeStyle = '#ddd';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 10; i++) {
+                const y = height - padding - (i / 10) * (height - 2 * padding);
+                ctx.beginPath();
+                ctx.moveTo(padding, y);
+                ctx.lineTo(width - padding, y);
+                ctx.stroke();
+                
+                ctx.fillStyle = '#666';
+                ctx.font = '12px Arial';
+                ctx.fillText(i.toString(), 10, y + 5);
+            }
+            
+            // Data line
+            ctx.strokeStyle = '#667eea';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            
+            data.forEach((point, i) => {
+                const x = padding + (i / (data.length - 1)) * (width - 2 * padding);
+                const y = height - padding - (point.altitude / 10) * (height - 2 * padding);
+                
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            
+            ctx.stroke();
+            
+            // Title
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 16px Arial';
+            ctx.fillText(title, width / 2 - ctx.measureText(title).width / 2, 25);
+            
+            // Axis labels
+            ctx.font = '12px Arial';
+            ctx.fillText('Time Steps', width / 2 - 30, height - 10);
+            ctx.save();
+            ctx.translate(15, height / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillText('Altitude', -30, 0);
+            ctx.restore();
+        }
+
+        function runReflexAgent() {
+            const initialAlt = parseInt(document.getElementById('initialAlt').value);
+            const windIntensity = parseInt(document.getElementById('windIntensity').value);
+            const steps = parseInt(document.getElementById('steps').value);
+            
+            const agent = new ReflexAgent();
+            const result = simulateSimulation(agent, initialAlt, windIntensity, steps);
+            
+            displayResults('Reflex Agent', result, '#e74c3c');
+        }
+
+        function runModelBasedAgent() {
+            const initialAlt = parseInt(document.getElementById('initialAlt').value);
+            const windIntensity = parseInt(document.getElementById('windIntensity').value);
+            const steps = parseInt(document.getElementById('steps').value);
+            
+            const agent = new ModelBasedAgent();
+            const result = simulateSimulation(agent, initialAlt, windIntensity, steps);
+            
+            displayResults('Model-Based Agent', result, '#2ecc71');
+        }
+
+        function compareAgents() {
+            const initialAlt = parseInt(document.getElementById('initialAlt').value);
+            const windIntensity = parseInt(document.getElementById('windIntensity').value);
+            const steps = parseInt(document.getElementById('steps').value);
+            
+            const reflexResult = simulateSimulation(new ReflexAgent(), initialAlt, windIntensity, steps);
+            const modelResult = simulateSimulation(new ModelBasedAgent(), initialAlt, windIntensity, steps);
+            
+            displayComparison(reflexResult, modelResult);
+        }
+
+        function displayResults(agentName, result, color) {
+            const output = document.getElementById('output');
+            const resultContent = document.getElementById('resultContent');
+            const stats = document.getElementById('stats');
+            
+            output.style.display = 'block';
+            
+            resultContent.innerHTML = `
+                <div class="alert alert-success">
+                    ✓ ${agentName} simulation completed!
+                </div>
+            `;
+            
+            drawChart(document.getElementById('altitudeChart'), result.history, `${agentName} - Altitude Over Time`);
+            
+            stats.innerHTML = `
+                <div class="stat-card">
+                    <div class="label">Time in Target Band</div>
+                    <div class="value">${result.inBandPercentage}%</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Total Adjustments</div>
+                    <div class="value">${result.adjustments}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Avg Adjustments/Step</div>
+                    <div class="value">${result.avgAdjustment}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Agent Type</div>
+                    <div class="value" style="font-size:1.1rem">${agentName}</div>
+                </div>
+            `;
+        }
+
+        function displayComparison(reflexResult, modelResult) {
+            const output = document.getElementById('output');
+            const resultContent = document.getElementById('resultContent');
+            const stats = document.getElementById('stats');
+            
+            output.style.display = 'block';
+            
+            const winner = modelResult.inBandPercentage > reflexResult.inBandPercentage ? 'Model-Based' : 'Reflex';
+            
+            resultContent.innerHTML = `
+                <div class="alert alert-success">
+                    ✓ Comparison completed! Winner: <strong>${winner} Agent</strong>
+                </div>
+                <table>
+                    <tr>
+                        <th>Metric</th>
+                        <th>Reflex Agent</th>
+                        <th>Model-Based Agent</th>
+                    </tr>
+                    <tr>
+                        <td>Time in Target Band</td>
+                        <td>${reflexResult.inBandPercentage}%</td>
+                        <td><strong>${modelResult.inBandPercentage}%</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Total Adjustments</td>
+                        <td>${reflexResult.adjustments}</td>
+                        <td>${modelResult.adjustments}</td>
+                    </tr>
+                    <tr>
+                        <td>Avg Adjustments/Step</td>
+                        <td>${reflexResult.avgAdjustment}</td>
+                        <td>${modelResult.avgAdjustment}</td>
+                    </tr>
+                </table>
+            `;
+            
+            drawChart(document.getElementById('altitudeChart'), modelResult.history, 'Model-Based Agent (Better Performance)');
+            
+            stats.innerHTML = `
+                <div class="stat-card" style="border-left-color: #e74c3c;">
+                    <div class="label">Reflex In-Band</div>
+                    <div class="value">${reflexResult.inBandPercentage}%</div>
+                </div>
+                <div class="stat-card" style="border-left-color: #2ecc71;">
+                    <div class="label">Model In-Band</div>
+                    <div class="value">${modelResult.inBandPercentage}%</div>
+                </div>
+                <div class="stat-card" style="border-left-color: #e74c3c;">
+                    <div class="label">Reflex Adjustments</div>
+                    <div class="value">${reflexResult.adjustments}</div>
+                </div>
+                <div class="stat-card" style="border-left-color: #2ecc71;">
+                    <div class="label">Model Adjustments</div>
+                    <div class="value">${modelResult.adjustments}</div>
+                </div>
+            `;
+        }
+
+        function simulateSimulation(agent, initialAlt, windIntensity, steps) {
+            return runSimulation(agent, initialAlt, windIntensity, steps);
+        }
+    </script>
+</body>
+</html>

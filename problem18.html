@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Problem 18: City Route Finder</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <style>
+        body { background: linear-gradient(135deg, #134e5e 0%, #71b280 100%); }
+        .problem-container { background: #f8faf9; border: 4px solid #2d6a4f; box-shadow: 0 20px 60px rgba(45, 106, 79, 0.4); }
+        .back-button { background: linear-gradient(135deg, #2d6a4f 0%, #1b4332 100%); color: white; border-radius: 25px; font-weight: 600; }
+        .back-button:hover { background: linear-gradient(135deg, #1b4332 0%, #081c15 100%); }
+        .problem-header { border-bottom: 4px solid #2d6a4f; background: linear-gradient(135deg, #d8f3dc 0%, #b7e4c7 100%); margin: -40px -40px 30px -40px; padding: 40px; }
+        .problem-header h1 { color: #1b4332; font-weight: 700; }
+        .problem-header .description { color: #2d6a4f; }
+        .controls { background: #ffffff; border: 3px solid #52b788; border-radius: 15px; }
+        .controls h3 { color: #1b4332; font-weight: 600; }
+        .controls label { color: #2d6a4f; font-weight: 500; }
+        .btn { background: linear-gradient(135deg, #40916c 0%, #2d6a4f 100%); border-radius: 25px; font-weight: 600; }
+        .btn:hover { background: linear-gradient(135deg, #2d6a4f 0%, #1b4332 100%); transform: scale(1.05); }
+        .btn-secondary { background: white; color: #2d6a4f; border: 2px solid #52b788; }
+        select { border: 2px solid #52b788; border-radius: 8px; }
+        .output { background: #f1faee; border: 3px solid #2d6a4f; border-radius: 15px; }
+    </style>
+    <div class="problem-container">
+        <a href="index.html" class="back-button">← Back to Home</a>
+        
+        <div class="problem-header">
+            <h1>🗺️ Problem 18: AI-Enhanced City Route Finder</h1>
+            <p class="description">
+                Compare multiple routes between locations with distance, time, and intersection analysis.
+            </p>
+        </div>
+
+        <div class="controls">
+            <h3>Route Configuration</h3>
+            <div class="control-group">
+                <label>Start Location:</label>
+                <select id="startLocation">
+                    <option value="downtown">Downtown</option>
+                    <option value="airport">Airport</option>
+                    <option value="university">University</option>
+                    <option value="mall">Shopping Mall</option>
+                    <option value="stadium">Stadium</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>End Location:</label>
+                <select id="endLocation">
+                    <option value="airport">Airport</option>
+                    <option value="university">University</option>
+                    <option value="mall">Shopping Mall</option>
+                    <option value="stadium">Stadium</option>
+                    <option value="downtown">Downtown</option>
+                </select>
+            </div>
+            <button class="btn" onclick="findRoutes()">Find Routes</button>
+            <button class="btn btn-secondary" onclick="randomLocations()">Random Locations</button>
+        </div>
+
+        <div id="output" class="output" style="display:none;">
+            <h3>Route Comparison</h3>
+            <div id="resultContent"></div>
+        </div>
+    </div>
+
+    <script>
+        const locations = {
+            downtown: {name: "Downtown", x: 0, y: 0},
+            airport: {name: "Airport", x: 15, y: 8},
+            university: {name: "University", x: 5, y: 12},
+            mall: {name: "Shopping Mall", x: 10, y: 3},
+            stadium: {name: "Stadium", x: 8, y: 15}
+        };
+
+        const routes = {
+            'downtown-airport': [
+                {name: "Highway Route", distance: 18, time: 22, turns: 3, traffic: "Medium"},
+                {name: "City Route", distance: 22, time: 35, turns: 12, traffic: "Heavy"}
+            ],
+            'downtown-university': [
+                {name: "Direct Route", distance: 13, time: 18, turns: 5, traffic: "Light"},
+                {name: "Scenic Route", distance: 16, time: 25, turns: 8, traffic: "Light"}
+            ],
+            'downtown-mall': [
+                {name: "Main Street", distance: 11, time: 15, turns: 4, traffic: "Medium"},
+                {name: "Bypass Route", distance: 14, time: 12, turns: 2, traffic: "Light"}
+            ],
+            'downtown-stadium': [
+                {name: "Stadium Express", distance: 17, time: 20, turns: 6, traffic: "Medium"},
+                {name: "Local Roads", distance: 19, time: 28, turns: 15, traffic: "Heavy"}
+            ],
+            'airport-university': [
+                {name: "Airport Road", distance: 16, time: 20, turns: 7, traffic: "Light"},
+                {name: "Connector Route", distance: 19, time: 24, turns: 10, traffic: "Medium"}
+            ],
+            'airport-mall': [
+                {name: "Direct Highway", distance: 12, time: 14, turns: 3, traffic: "Light"},
+                {name: "City Route", distance: 15, time: 20, turns: 9, traffic: "Medium"}
+            ],
+            'airport-stadium': [
+                {name: "Ring Road", distance: 20, time: 25, turns: 8, traffic: "Medium"},
+                {name: "Express Route", distance: 18, time: 22, turns: 5, traffic: "Light"}
+            ],
+            'university-mall': [
+                {name: "Campus Road", distance: 10, time: 15, turns: 6, traffic: "Light"},
+                {name: "Highway Route", distance: 13, time: 12, turns: 3, traffic: "Light"}
+            ],
+            'university-stadium': [
+                {name: "Direct Route", distance: 8, time: 12, turns: 4, traffic: "Light"},
+                {name: "Scenic Route", distance: 11, time: 18, turns: 9, traffic: "Light"}
+            ],
+            'mall-stadium': [
+                {name: "Central Avenue", distance: 14, time: 18, turns: 7, traffic: "Medium"},
+                {name: "Bypass Route", distance: 16, time: 15, turns: 4, traffic: "Light"}
+            ]
+        };
+
+        function findRoutes() {
+            const start = document.getElementById('startLocation').value;
+            const end = document.getElementById('endLocation').value;
+
+            if (start === end) {
+                alert('Start and end locations must be different');
+                return;
+            }
+
+            const key = `${start}-${end}`;
+            const reverseKey = `${end}-${start}`;
+            let routeOptions = routes[key] || routes[reverseKey];
+
+            if (!routeOptions) {
+                // Generate synthetic routes
+                const distance = Math.floor(Math.random() * 15) + 10;
+                routeOptions = [
+                    {name: "Route A", distance: distance, time: Math.floor(distance * 1.2), turns: Math.floor(Math.random() * 10) + 3, traffic: "Medium"},
+                    {name: "Route B", distance: distance + 3, time: Math.floor((distance + 3) * 1.1), turns: Math.floor(Math.random() * 6) + 2, traffic: "Light"}
+                ];
+            }
+
+            displayRoutes(locations[start].name, locations[end].name, routeOptions);
+        }
+
+        function displayRoutes(startName, endName, routeOptions) {
+            const output = document.getElementById('output');
+            const resultContent = document.getElementById('resultContent');
+
+            output.style.display = 'block';
+
+            // Find shortest route
+            const shortest = routeOptions.reduce((min, route) => 
+                route.distance < min.distance ? route : min
+            );
+
+            // Find fastest route
+            const fastest = routeOptions.reduce((min, route) => 
+                route.time < min.time ? route : min
+            );
+
+            resultContent.innerHTML = `
+                <div class="alert alert-success">
+                    <strong>From:</strong> ${startName} → <strong>To:</strong> ${endName}
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 25px;">
+                    ${routeOptions.map((route, i) => {
+                        const isShortest = route.name === shortest.name;
+                        const isFastest = route.name === fastest.name;
+                        const badges = [];
+                        if (isShortest) badges.push('🏆 Shortest');
+                        if (isFastest) badges.push('⚡ Fastest');
+
+                        return `
+                            <div style="background: ${isShortest || isFastest ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'white'}; 
+                                        color: ${isShortest || isFastest ? 'white' : '#333'}; 
+                                        padding: 25px; 
+                                        border-radius: 15px; 
+                                        border: ${isShortest || isFastest ? 'none' : '2px solid #e0e0e0'};
+                                        box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                                <h3 style="margin-bottom: 15px; font-size: 1.5rem;">${route.name}</h3>
+                                ${badges.length > 0 ? `
+                                    <div style="margin-bottom: 15px;">
+                                        ${badges.map(badge => `
+                                            <span style="background: ${isShortest || isFastest ? 'rgba(255,255,255,0.2)' : '#667eea'}; 
+                                                        color: ${isShortest || isFastest ? 'white' : 'white'}; 
+                                                        padding: 5px 10px; 
+                                                        border-radius: 15px; 
+                                                        font-size: 0.85rem; 
+                                                        margin-right: 5px;">
+                                                ${badge}
+                                            </span>
+                                        `).join('')}
+                                    </div>
+                                ` : ''}
+                                <div style="background: ${isShortest || isFastest ? 'rgba(255,255,255,0.1)' : '#f8f9fa'}; 
+                                            padding: 15px; 
+                                            border-radius: 10px; 
+                                            margin: 15px 0;">
+                                    <p style="margin: 8px 0;"><strong>📏 Distance:</strong> ${route.distance} km</p>
+                                    <p style="margin: 8px 0;"><strong>⏱️ Time:</strong> ${route.time} minutes</p>
+                                    <p style="margin: 8px 0;"><strong>🔄 Turns:</strong> ${route.turns} intersections</p>
+                                    <p style="margin: 8px 0;"><strong>🚦 Traffic:</strong> ${route.traffic}</p>
+                                </div>
+                                <div style="margin-top: 15px;">
+                                    <strong>Score:</strong> ${calculateRouteScore(route).toFixed(1)}/100
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+
+                <div style="background: white; padding: 25px; border-radius: 10px; margin-top: 25px;">
+                    <h3 style="color: #667eea; margin-bottom: 20px;">📊 Route Comparison Table</h3>
+                    <table>
+                        <tr>
+                            <th>Route Name</th>
+                            <th>Distance (km)</th>
+                            <th>Time (min)</th>
+                            <th>Turns</th>
+                            <th>Traffic</th>
+                            <th>Score</th>
+                        </tr>
+                        ${routeOptions.map(route => `
+                            <tr style="${route.name === fastest.name ? 'background: #d4edda;' : ''}">
+                                <td><strong>${route.name}</strong></td>
+                                <td>${route.distance}</td>
+                                <td>${route.time}</td>
+                                <td>${route.turns}</td>
+                                <td>${route.traffic}</td>
+                                <td><strong>${calculateRouteScore(route).toFixed(1)}</strong></td>
+                            </tr>
+                        `).join('')}
+                    </table>
+                </div>
+
+                <div class="alert" style="background: #e7f3ff; color: #004085; border-left-color: #0056b3; margin-top: 20px;">
+                    <strong>💡 Recommendation:</strong> For the quickest journey, take <strong>${fastest.name}</strong> (${fastest.time} minutes). 
+                    For the shortest distance, take <strong>${shortest.name}</strong> (${shortest.distance} km).
+                </div>
+            `;
+        }
+
+        function calculateRouteScore(route) {
+            const trafficPenalty = {Light: 0, Medium: -10, Heavy: -20};
+            let score = 100;
+            score -= (route.distance / 2); // Distance penalty
+            score -= (route.time / 3); // Time penalty
+            score -= (route.turns); // Turns penalty
+            score += trafficPenalty[route.traffic];
+            return Math.max(0, Math.min(100, score));
+        }
+
+        function randomLocations() {
+            const locs = Object.keys(locations);
+            const start = locs[Math.floor(Math.random() * locs.length)];
+            let end = locs[Math.floor(Math.random() * locs.length)];
+            while (end === start) {
+                end = locs[Math.floor(Math.random() * locs.length)];
+            }
+            document.getElementById('startLocation').value = start;
+            document.getElementById('endLocation').value = end;
+        }
+    </script>
+</body>
+</html>
