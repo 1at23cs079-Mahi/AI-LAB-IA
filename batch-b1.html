@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Batch B1 - Problems 1-6</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="modern-ui.css">
+    <style>
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .card { animation: fadeInUp 0.6s ease-out backwards; }
+        .card:nth-child(1) { animation-delay: 0.1s; }
+        .card:nth-child(2) { animation-delay: 0.2s; }
+        .card:nth-child(3) { animation-delay: 0.3s; }
+        .card:nth-child(4) { animation-delay: 0.4s; }
+        .card:nth-child(5) { animation-delay: 0.5s; }
+        .card:nth-child(6) { animation-delay: 0.6s; }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+        }
+        
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .batch-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .batch-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .batch-header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .back-to-selection {
+            display: inline-block;
+            padding: 12px 30px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .back-to-selection:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="batch-header">
+            <h1>📘 Batch B1 - Problems 1-6</h1>
+            <p>Search Algorithms & Pathfinding</p>
+            <a href="batch-selection.html" class="back-to-selection">← Back to Batch Selection</a>
+        </div>
+
+        <div class="grid-container">
+            <div class="card category-search" onclick="navigateTo('robot-vacuum-path-optimization.html')">
+                <div class="card-number">1</div>
+                <h3>Robot Vacuum Path Optimization</h3>
+                <p>Uniform Cost Search for optimal cleaning route</p>
+                <span class="tag">Search Algorithm</span>
+            </div>
+
+            <div class="card category-agent" onclick="navigateTo('autonomous-drone-altitude-adjustment.html')">
+                <div class="card-number">2</div>
+                <h3>Autonomous Drone Altitude Adjustment</h3>
+                <p>Reflex & Model-based agent for stabilization</p>
+                <span class="tag">Agent-Based</span>
+            </div>
+
+            <div class="card category-optimization" onclick="navigateTo('smart-calendar-conflict-resolver.html')">
+                <div class="card-number">3</div>
+                <h3>Smart Calendar Conflict Resolver</h3>
+                <p>Minimum conflict heuristic scheduling</p>
+                <span class="tag">Optimization</span>
+            </div>
+
+            <div class="card category-search" onclick="navigateTo('warehouse-item-retrieval-multi-path-search.html')">
+                <div class="card-number">4</div>
+                <h3>Warehouse Item Retrieval (Multi-Path Search)</h3>
+                <p>A* vs Greedy Best-First comparison</p>
+                <span class="tag">Search Algorithm</span>
+            </div>
+
+            <div class="card category-search" onclick="navigateTo('forest-fire-escape-planner.html')">
+                <div class="card-number">5</div>
+                <h3>Forest Fire Escape Planner</h3>
+                <p>Dynamic pathfinding with spreading fire</p>
+                <span class="tag">Dynamic Planning</span>
+            </div>
+
+            <div class="card category-search" onclick="navigateTo('emergency-evacuation-assistant.html')">
+                <div class="card-number">6</div>
+                <h3>Emergency Evacuation Assistant</h3>
+                <p>UCS with dynamic congestion</p>
+                <span class="tag">Search Algorithm</span>
+            </div>
+        </div>
+
+        <footer>
+            <p>AI Lab Suite - Batch B1 | Built with Vanilla JS | Educational Purposes Only</p>
+        </footer>
+    </div>
+
+    <script>
+        function navigateTo(page) {
+            window.location.href = page;
+        }
+
+        document.querySelectorAll('.card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-10px)';
+            });
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+            });
+        });
+    </script>
+</body>
+</html>

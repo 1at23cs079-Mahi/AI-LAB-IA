@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Batch B3 - Problems 13-20</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="modern-ui.css">
+    <style>
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .card { animation: fadeInUp 0.6s ease-out backwards; }
+        .card:nth-child(1) { animation-delay: 0.1s; }
+        .card:nth-child(2) { animation-delay: 0.2s; }
+        .card:nth-child(3) { animation-delay: 0.3s; }
+        .card:nth-child(4) { animation-delay: 0.4s; }
+        .card:nth-child(5) { animation-delay: 0.5s; }
+        .card:nth-child(6) { animation-delay: 0.6s; }
+        .card:nth-child(7) { animation-delay: 0.7s; }
+        .card:nth-child(8) { animation-delay: 0.8s; }
+        
+        body {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 50%, #43e97b 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+        }
+        
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .batch-header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(79, 172, 254, 0.3);
+        }
+
+        .batch-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .batch-header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .back-to-selection {
+            display: inline-block;
+            padding: 12px 30px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .back-to-selection:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="batch-header">
+            <h1>📙 Batch B3 - Problems 13-20</h1>
+            <p>NLP, Analysis & Advanced Applications</p>
+            <a href="batch-selection.html" class="back-to-selection">← Back to Batch Selection</a>
+        </div>
+
+        <div class="grid-container">
+            <div class="card category-nlp" onclick="navigateTo('youtube-comment-sentiment-analyzer.html')">
+                <div class="card-number">13</div>
+                <h3>YouTube Comment Sentiment Analyzer</h3>
+                <p>Comment classification system</p>
+                <span class="tag">NLP</span>
+            </div>
+
+            <div class="card category-rules" onclick="navigateTo('mini-movie-recommendation-system.html')">
+                <div class="card-number">14</div>
+                <h3>Mini Movie Recommendation System</h3>
+                <p>Similarity-based recommender</p>
+                <span class="tag">Recommendation</span>
+            </div>
+
+            <div class="card category-nlp" onclick="navigateTo('product-review-summarizer.html')">
+                <div class="card-number">15</div>
+                <h3>Product Review Summarizer</h3>
+                <p>Extract pros/cons from reviews</p>
+                <span class="tag">NLP</span>
+            </div>
+
+            <div class="card category-web" onclick="navigateTo('social-media-fake-news-checker.html')">
+                <div class="card-number">16</div>
+                <h3>Social Media Fake News Checker</h3>
+                <p>Claim verification system</p>
+                <span class="tag">Verification</span>
+            </div>
+
+            <div class="card category-nlp" onclick="navigateTo('job-skill-extractor.html')">
+                <div class="card-number">17</div>
+                <h3>Job Skill Extractor</h3>
+                <p>Parse & analyze job requirements</p>
+                <span class="tag">Text Mining</span>
+            </div>
+
+            <div class="card category-web" onclick="navigateTo('ai-enhanced-city-route-finder.html')">
+                <div class="card-number">18</div>
+                <h3>AI-Enhanced City Route Finder (Maps + Python)</h3>
+                <p>Compare routes with metrics</p>
+                <span class="tag">Maps API</span>
+            </div>
+
+            <div class="card category-agent" onclick="navigateTo('chatbot-builder-using-ai-api.html')">
+                <div class="card-number">19</div>
+                <h3>Chatbot Builder Using Any AI API</h3>
+                <p>Design custom chatbot interactions</p>
+                <span class="tag">Conversational AI</span>
+            </div>
+
+            <div class="card category-rules" onclick="navigateTo('mini-medical-expert-system.html')">
+                <div class="card-number">20</div>
+                <h3>Mini Medical Expert System (Non-clinical, Logic Only)</h3>
+                <p>Symptom-based diagnosis classifier</p>
+                <span class="tag">Expert System</span>
+            </div>
+        </div>
+
+        <footer>
+            <p>AI Lab Suite - Batch B3 | Built with Vanilla JS | Educational Purposes Only</p>
+        </footer>
+    </div>
+
+    <script>
+        function navigateTo(page) {
+            window.location.href = page;
+        }
+
+        document.querySelectorAll('.card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-10px)';
+            });
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+            });
+        });
+    </script>
+</body>
+</html>

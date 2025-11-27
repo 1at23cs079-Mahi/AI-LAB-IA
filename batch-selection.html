@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Lab - Batch Selection</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="modern-ui.css">
+    <style>
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .selection-container {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 30px;
+            padding: 60px;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 90%;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            color: #666;
+            margin-top: 10px;
+        }
+
+        .batch-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .batch-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            padding: 40px 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .batch-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .batch-card:hover::before {
+            opacity: 1;
+        }
+
+        .batch-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 20px 50px rgba(102, 126, 234, 0.5);
+            animation: pulse 1s infinite;
+        }
+
+        .batch-card h2 {
+            font-size: 3rem;
+            color: white;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+
+        .batch-card .batch-label {
+            font-size: 1.3rem;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .batch-card .problems-range {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 12px 20px;
+            border-radius: 15px;
+            font-size: 1.1rem;
+            color: white;
+            font-weight: 500;
+            margin-top: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .batch-card .problem-count {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.95rem;
+            margin-top: 10px;
+        }
+
+        .all-problems-btn {
+            display: block;
+            margin: 50px auto 0;
+            padding: 18px 50px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(245, 87, 108, 0.3);
+        }
+
+        .all-problems-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(245, 87, 108, 0.5);
+        }
+
+        .info-section {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            padding: 25px;
+            border-radius: 15px;
+            margin-top: 40px;
+            text-align: center;
+        }
+
+        .info-section h3 {
+            color: #d63031;
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+        }
+
+        .info-section p {
+            color: #2d3436;
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 768px) {
+            .selection-container {
+                padding: 40px 30px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .batch-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="selection-container">
+        <div class="header">
+            <h1>🎓 AI Lab Batch Selection</h1>
+            <p>Select your batch to view assigned problems for AI Internals</p>
+        </div>
+
+        <div class="batch-grid">
+            <div class="batch-card" onclick="goToBatch('B1')">
+                <h2>B1</h2>
+                <div class="batch-label">Batch 1</div>
+                <div class="problems-range">Problems 1-6</div>
+                <div class="problem-count">6 Problems</div>
+            </div>
+
+            <div class="batch-card" onclick="goToBatch('B2')">
+                <h2>B2</h2>
+                <div class="batch-label">Batch 2</div>
+                <div class="problems-range">Problems 7-12</div>
+                <div class="problem-count">6 Problems</div>
+            </div>
+
+            <div class="batch-card" onclick="goToBatch('B3')">
+                <h2>B3</h2>
+                <div class="batch-label">Batch 3</div>
+                <div class="problems-range">Problems 13-20</div>
+                <div class="problem-count">8 Problems</div>
+            </div>
+        </div>
+
+        <button class="all-problems-btn" onclick="viewAllProblems()">
+            📚 View All 20 Problems
+        </button>
+
+        <div class="info-section">
+            <h3>📅 AI Internals - Tomorrow</h3>
+            <p>Each batch has been assigned specific problem statements. Select your batch above to access your problems.</p>
+        </div>
+    </div>
+
+    <script>
+        function goToBatch(batch) {
+            // Store batch in localStorage for filtering
+            localStorage.setItem('selectedBatch', batch);
+            // Redirect to batch-specific page
+            window.location.href = `batch-${batch.toLowerCase()}.html`;
+        }
+
+        function viewAllProblems() {
+            // Clear batch selection
+            localStorage.removeItem('selectedBatch');
+            // Go to main index
+            window.location.href = 'index.html';
+        }
+
+        // Add keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            if (e.key === '1') goToBatch('B1');
+            if (e.key === '2') goToBatch('B2');
+            if (e.key === '3') goToBatch('B3');
+            if (e.key === 'a' || e.key === 'A') viewAllProblems();
+        });
+    </script>
+</body>
+</html>
