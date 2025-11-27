@@ -42,13 +42,30 @@
 
         <div class="controls">
             <h3>Forest Configuration (6×6 Grid)</h3>
+            
             <div class="control-group">
-                <label>Click cells to set fire sources (red), obstacles (black), or clear (white)</label>
+                <label>Select Cell Type:</label>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px;">
+                    <button class="btn btn-secondary" onclick="setCellMode('clear')" id="mode-clear" style="background: white; color: #330000; border: 2px solid #ff4444;">
+                        ⬜ Clear
+                    </button>
+                    <button class="btn btn-secondary" onclick="setCellMode('fire')" id="mode-fire" style="background: #ff4444; color: white;">
+                        🔥 Fire
+                    </button>
+                    <button class="btn btn-secondary" onclick="setCellMode('obstacle')" id="mode-obstacle" style="background: #2a0000; color: white;">
+                        ⬛ Obstacle
+                    </button>
+                </div>
+                <label>Click cells in the grid to place: <strong id="currentMode">Clear</strong></label>
                 <div id="gridSetup" class="visualization"></div>
             </div>
-            <button class="btn" onclick="findEscapePath()">Find Escape Path</button>
-            <button class="btn" onclick="animate()">Animate Fire Spread</button>
-            <button class="btn btn-secondary" onclick="resetForest()">Reset</button>
+            
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px;">
+                <button class="btn" onclick="findEscapePath()">Find Escape Path</button>
+                <button class="btn" onclick="animateFireSpread()">Animate Fire Spread</button>
+                <button class="btn btn-secondary" onclick="randomizeForest()">🎲 Randomize</button>
+                <button class="btn btn-secondary" onclick="resetForest()">Reset</button>
+            </div>
         </div>
 
         <div id="output" class="output" style="display:none;">
@@ -67,11 +84,62 @@
         let fireStart = [{x: 2, y: 2}, {x: 4, y: 4}];
         let start = {x: 0, y: 0};
         let exit = {x: 5, y: 5};
+        let cellMode = 'clear'; // Current cell placement mode
+        let animationInterval = null;
+
+        function setCellMode(mode) {
+            cellMode = mode;
+            // Update button styles
+            document.querySelectorAll('[id^="mode-"]').forEach(btn => {
+                btn.style.opacity = '0.6';
+                btn.style.transform = 'scale(1)';
+            });
+            const activeBtn = document.getElementById(`mode-${mode}`);
+            activeBtn.style.opacity = '1';
+            activeBtn.style.transform = 'scale(1.05)';
+            
+            // Update label
+            const modeNames = {
+                'clear': 'Clear',
+                'fire': 'Fire 🔥',
+                'obstacle': 'Obstacle ⬛'
+            };
+            document.getElementById('currentMode').textContent = modeNames[mode];
+        }
 
         function initGrid() {
             grid = Array(SIZE).fill(null).map(() => Array(SIZE).fill(0));
+            fireStart = [{x: 2, y: 2}, {x: 4, y: 4}];
             fireStart.forEach(f => grid[f.x][f.y] = 2); // 2 = fire
             grid[1][2] = grid[3][1] = 1; // obstacles
+            renderGrid();
+        }
+
+        function randomizeForest() {
+            grid = Array(SIZE).fill(null).map(() => Array(SIZE).fill(0));
+            
+            // Random obstacles (20-30% of cells)
+            const obstacleCount = Math.floor(Math.random() * 7) + 5;
+            for (let i = 0; i < obstacleCount; i++) {
+                const x = Math.floor(Math.random() * SIZE);
+                const y = Math.floor(Math.random() * SIZE);
+                if ((x !== start.x || y !== start.y) && (x !== exit.x || y !== exit.y)) {
+                    grid[x][y] = 1;
+                }
+            }
+            
+            // Random fire sources (2-4 cells)
+            fireStart = [];
+            const fireCount = Math.floor(Math.random() * 3) + 2;
+            for (let i = 0; i < fireCount; i++) {
+                const x = Math.floor(Math.random() * SIZE);
+                const y = Math.floor(Math.random() * SIZE);
+                if ((x !== start.x || y !== start.y) && (x !== exit.x || y !== exit.y) && grid[x][y] === 0) {
+                    grid[x][y] = 2;
+                    fireStart.push({x, y});
+                }
+            }
+            
             renderGrid();
         }
 
@@ -87,19 +155,40 @@
                     const cell = document.createElement('div');
                     cell.className = 'cell';
                     cell.onclick = () => {
-                        if ((i === start.x && j === start.y) || (i === exit.x && j === exit.y)) return;
-                        grid[i][j] = (grid[i][j] + 1) % 3;
+                        if ((i === start.x && j === start.y) || (i === exit.x && j === exit.y)) {
+                            return; // Cannot change start/exit
+                        }
+                        
+                        // Apply current mode
+                        if (cellMode === 'clear') {
+                            grid[i][j] = 0;
+                        } else if (cellMode === 'fire') {
+                            grid[i][j] = 2;
+                            if (!fireStart.some(f => f.x === i && f.y === j)) {
+                                fireStart.push({x: i, y: j});
+                            }
+                        } else if (cellMode === 'obstacle') {
+                            grid[i][j] = 1;
+                            // Remove from fire sources if it was fire
+                            fireStart = fireStart.filter(f => f.x !== i || f.y !== j);
+                        }
+                        
                         renderGrid();
                     };
                     
                     if (i === start.x && j === start.y) {
                         cell.classList.add('start');
                         cell.textContent = 'S';
+                        cell.style.fontSize = '20px';
+                        cell.style.fontWeight = 'bold';
                     } else if (i === exit.x && j === exit.y) {
                         cell.classList.add('goal');
                         cell.textContent = 'E';
+                        cell.style.fontSize = '20px';
+                        cell.style.fontWeight = 'bold';
                     } else if (grid[i][j] === 1) {
                         cell.classList.add('obstacle');
+                        cell.textContent = '⬛';
                     } else if (grid[i][j] === 2) {
                         cell.classList.add('fire');
                         cell.textContent = '🔥';
@@ -173,6 +262,7 @@
             const output = document.getElementById('output');
             const resultContent = document.getElementById('resultContent');
             const stats = document.getElementById('stats');
+            const animationContainer = document.getElementById('animationContainer');
             
             output.style.display = 'block';
             
@@ -194,14 +284,130 @@
                     <div class="value">${10 - time} min</div>
                 </div>
             `;
+
+            // Animate the path
+            animationContainer.innerHTML = '';
+            const gridDiv = document.createElement('div');
+            gridDiv.className = 'grid';
+            gridDiv.style.gridTemplateColumns = `repeat(${SIZE}, 1fr)`;
+            
+            let step = 0;
+            if (animationInterval) clearInterval(animationInterval);
+            
+            animationInterval = setInterval(() => {
+                if (step >= time) {
+                    clearInterval(animationInterval);
+                    return;
+                }
+                
+                gridDiv.innerHTML = '';
+                const currentGrid = fireTimeline[step];
+                
+                for (let i = 0; i < SIZE; i++) {
+                    for (let j = 0; j < SIZE; j++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'cell';
+                        
+                        const onPath = path.some((p, idx) => p.x === i && p.y === j && idx <= step);
+                        
+                        if (i === start.x && j === start.y) {
+                            cell.classList.add('start');
+                            cell.textContent = 'S';
+                        } else if (i === exit.x && j === exit.y) {
+                            cell.classList.add('goal');
+                            cell.textContent = 'E';
+                        } else if (onPath) {
+                            cell.classList.add('path');
+                            cell.textContent = '✓';
+                        } else if (currentGrid[i][j] === 1) {
+                            cell.classList.add('obstacle');
+                            cell.textContent = '⬛';
+                        } else if (currentGrid[i][j] === 2) {
+                            cell.classList.add('fire');
+                            cell.textContent = '🔥';
+                        }
+                        
+                        gridDiv.appendChild(cell);
+                    }
+                }
+                
+                animationContainer.innerHTML = `<h4>Time: ${step} minutes</h4>`;
+                animationContainer.appendChild(gridDiv);
+                step++;
+            }, 800);
+        }
+
+        function animateFireSpread() {
+            const output = document.getElementById('output');
+            const animationContainer = document.getElementById('animationContainer');
+            
+            output.style.display = 'block';
+            document.getElementById('resultContent').innerHTML = `
+                <div class="alert" style="background: #ffa500; color: white;">🔥 Fire Spread Simulation</div>
+            `;
+            document.getElementById('stats').innerHTML = '';
+
+            const fireTimeline = [grid.map(row => [...row])];
+            for (let t = 0; t < 8; t++) {
+                fireTimeline.push(spreadFire(fireTimeline[fireTimeline.length - 1]));
+            }
+
+            animationContainer.innerHTML = '';
+            const gridDiv = document.createElement('div');
+            gridDiv.className = 'grid';
+            gridDiv.style.gridTemplateColumns = `repeat(${SIZE}, 1fr)`;
+            
+            let step = 0;
+            if (animationInterval) clearInterval(animationInterval);
+            
+            animationInterval = setInterval(() => {
+                if (step >= fireTimeline.length) {
+                    clearInterval(animationInterval);
+                    return;
+                }
+                
+                gridDiv.innerHTML = '';
+                const currentGrid = fireTimeline[step];
+                
+                for (let i = 0; i < SIZE; i++) {
+                    for (let j = 0; j < SIZE; j++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'cell';
+                        
+                        if (i === start.x && j === start.y) {
+                            cell.classList.add('start');
+                            cell.textContent = 'S';
+                        } else if (i === exit.x && j === exit.y) {
+                            cell.classList.add('goal');
+                            cell.textContent = 'E';
+                        } else if (currentGrid[i][j] === 1) {
+                            cell.classList.add('obstacle');
+                            cell.textContent = '⬛';
+                        } else if (currentGrid[i][j] === 2) {
+                            cell.classList.add('fire');
+                            cell.textContent = '🔥';
+                        }
+                        
+                        gridDiv.appendChild(cell);
+                    }
+                }
+                
+                animationContainer.innerHTML = `<h4>Time: ${step} minutes</h4>`;
+                animationContainer.appendChild(gridDiv);
+                step++;
+            }, 600);
         }
 
         function resetForest() {
+            if (animationInterval) clearInterval(animationInterval);
             initGrid();
             document.getElementById('output').style.display = 'none';
+            setCellMode('clear');
         }
 
+        // Initialize
         initGrid();
+        setCellMode('clear');
     </script>
 </body>
 </html>
