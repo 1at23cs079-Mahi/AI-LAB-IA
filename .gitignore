@@ -16,3 +16,7 @@ npm-debug.log*
 # Ignore temporary files
 *.tmp
 *.temp
+
+# Ignore node_modules
+node_modules/
+package-lock.json

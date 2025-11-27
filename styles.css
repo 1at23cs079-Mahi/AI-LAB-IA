@@ -16,6 +16,37 @@ body {
     color: #333;
 }
 
+/* Force readable text colors globally */
+p, div, span, label, td, li, a {
+    color: #333 !important;
+}
+
+/* Specific overrides for light backgrounds */
+.problem-container p,
+.problem-container div:not(.btn):not([style*="color:"]),
+.problem-container span:not([class*="badge"]),
+.problem-container label,
+.controls p,
+.controls div,
+.controls span,
+.controls label,
+.output p,
+.output div,
+.output span {
+    color: #1a202c !important;
+}
+
+/* Dark background text should be white */
+[style*="background: #"]:not([style*="background: #f"]):not([style*="background: #e"]):not([style*="background: #d"]) *,
+[style*="background:#"]:not([style*="background:#f"]):not([style*="background:#e"]):not([style*="background:#d"]) * {
+    color: white !important;
+}
+
+.problem-header h1,
+.problem-header p {
+    color: inherit !important;
+}
+
 .container {
     max-width: 1400px;
     margin: 0 auto;
@@ -166,13 +197,14 @@ footer {
 }
 
 .problem-header h1 {
-    color: #333;
+    color: #1a202c !important;
     font-size: 2.5rem;
     margin-bottom: 10px;
+    font-weight: 700;
 }
 
 .problem-header .description {
-    color: #666;
+    color: #4a5568 !important;
     font-size: 1.1rem;
     line-height: 1.6;
 }
@@ -393,13 +425,14 @@ table td {
     padding: 12px;
     text-align: left;
     border-bottom: 1px solid #ddd;
-    color: #333 !important;
+    color: #1a202c !important;
+    font-weight: 500;
 }
 
 table th {
     background: #667eea;
     color: white !important;
-    font-weight: 600;
+    font-weight: 700;
 }
 
 table tr:hover {
