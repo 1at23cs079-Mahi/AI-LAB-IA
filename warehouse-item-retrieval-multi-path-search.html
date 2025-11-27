@@ -138,6 +138,7 @@
         function findPath(start, goal, heuristic = 'astar') {
             const pq = [{pos: start, g: 0, h: manhattan(start, goal), path: [start]}];
             const visited = new Set();
+            const exploredCells = [];
             let nodesExplored = 0;
 
             while (pq.length > 0) {
@@ -151,10 +152,11 @@
                 
                 if (visited.has(key)) continue;
                 visited.add(key);
+                exploredCells.push({x: current.pos.x, y: current.pos.y});
                 nodesExplored++;
 
                 if (current.pos.x === goal.x && current.pos.y === goal.y) {
-                    return {path: current.path, cost: current.g, nodesExplored};
+                    return {path: current.path, cost: current.g, nodesExplored, exploredCells};
                 }
 
                 const dirs = [[0,1], [1,0], [0,-1], [-1,0]];
@@ -184,6 +186,7 @@
             let totalPath = [];
             let totalCost = 0;
             let totalNodes = 0;
+            let allExplored = [];
 
             for (const goal of goals) {
                 const result = findPath(currentPos, goal, heuristic);
@@ -192,10 +195,11 @@
                 totalPath = totalPath.concat(result.path.slice(1));
                 totalCost += result.cost;
                 totalNodes += result.nodesExplored;
+                allExplored = allExplored.concat(result.exploredCells);
                 currentPos = goal;
             }
 
-            return {path: [base, ...totalPath], cost: totalCost, nodesExplored: totalNodes};
+            return {path: [base, ...totalPath], cost: totalCost, nodesExplored: totalNodes, exploredCells: allExplored};
         }
 
         function solveAStar() {
@@ -260,7 +264,19 @@
             
             // Render comparison grids
             const solutionGrid = document.getElementById('solutionGrid');
-            solutionGrid.innerHTML = '<h4 style="color: #f57f17; margin: 15px 0;">Path Comparison</h4>';
+            solutionGrid.innerHTML = `
+                <h4 style="color: #f57f17; margin: 15px 0;">Path Comparison</h4>
+                <div style="background: #fff3e0; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #f57f17;">
+                    <h5 style="color: #424242; margin-top: 0;">💡 Why Different Nodes Explored?</h5>
+                    <p style="color: #616161; margin: 8px 0; font-size: 14px;">
+                        <strong style="color: #2ecc71;">A*</strong> uses <strong>g(n) + h(n)</strong> (cost so far + heuristic) - explores more systematically to guarantee optimal path<br>
+                        <strong style="color: #9b59b6;">Greedy</strong> uses <strong>only h(n)</strong> (heuristic to goal) - explores fewer nodes by rushing toward goal, may miss optimal path
+                    </p>
+                    <p style="color: #616161; margin: 8px 0; font-size: 14px;">
+                        Below: <span style="color: #64b5f6;">Light blue</span> = explored but not in final path, <span style="color: #2ecc71;">Green</span>/<span style="color: #9b59b6;">Purple</span> = final path
+                    </p>
+                </div>
+            `;
             
             // A* Grid
             const astarContainer = document.createElement('div');
@@ -270,6 +286,7 @@
             astarGrid.style.gridTemplateColumns = `repeat(${SIZE}, 1fr)`;
             
             const astarPathSet = new Set(astar.path.map(p => `${p.x},${p.y}`));
+            const astarExploredSet = new Set(astar.exploredCells.map(p => `${p.x},${p.y}`));
             
             for (let i = 0; i < SIZE; i++) {
                 for (let j = 0; j < SIZE; j++) {
@@ -297,6 +314,11 @@
                             cell.style.background = '#2ecc71';
                             cell.textContent = '→';
                             cell.style.color = 'white';
+                        } else if (astarExploredSet.has(key)) {
+                            cell.style.background = '#bbdefb';
+                            cell.style.color = '#1976d2';
+                            cell.style.fontSize = '10px';
+                            cell.textContent = '·';
                         }
                     }
                     astarGrid.appendChild(cell);
@@ -312,6 +334,7 @@
             greedyGrid.style.gridTemplateColumns = `repeat(${SIZE}, 1fr)`;
             
             const greedyPathSet = new Set(greedy.path.map(p => `${p.x},${p.y}`));
+            const greedyExploredSet = new Set(greedy.exploredCells.map(p => `${p.x},${p.y}`));
             
             for (let i = 0; i < SIZE; i++) {
                 for (let j = 0; j < SIZE; j++) {
@@ -339,6 +362,11 @@
                             cell.style.background = '#9b59b6';
                             cell.textContent = '→';
                             cell.style.color = 'white';
+                        } else if (greedyExploredSet.has(key)) {
+                            cell.style.background = '#e1bee7';
+                            cell.style.color = '#7b1fa2';
+                            cell.style.fontSize = '10px';
+                            cell.textContent = '·';
                         }
                     }
                     greedyGrid.appendChild(cell);
@@ -390,6 +418,7 @@
             gridDiv.style.gridTemplateColumns = `repeat(${SIZE}, 1fr)`;
             
             const pathSet = new Set(result.path.map(p => `${p.x},${p.y}`));
+            const exploredSet = new Set(result.exploredCells.map(p => `${p.x},${p.y}`));
             
             for (let i = 0; i < SIZE; i++) {
                 for (let j = 0; j < SIZE; j++) {
@@ -416,9 +445,14 @@
                             cell.textContent = 'X';
                             cell.style.color = 'white';
                         } else if (pathSet.has(key)) {
-                            cell.style.background = '#2ecc71';
+                            cell.style.background = alg === 'A*' ? '#2ecc71' : '#9b59b6';
                             cell.textContent = '→';
                             cell.style.color = 'white';
+                        } else if (exploredSet.has(key)) {
+                            cell.style.background = alg === 'A*' ? '#bbdefb' : '#e1bee7';
+                            cell.style.color = alg === 'A*' ? '#1976d2' : '#7b1fa2';
+                            cell.style.fontSize = '10px';
+                            cell.textContent = '·';
                         }
                     }
                     
