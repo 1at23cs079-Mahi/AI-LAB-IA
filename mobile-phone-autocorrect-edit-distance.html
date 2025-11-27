@@ -175,6 +175,50 @@ beautiful</textarea>
             `;
         }
 
+        function generateRandomTypo() {
+            const correctWords = [
+                'receive', 'believe', 'achieve', 'because', 'before', 'between',
+                'beautiful', 'necessary', 'separate', 'definitely', 'government',
+                'environment', 'accommodation', 'recommend', 'tomorrow', 'occurred',
+                'beginning', 'calendar', 'colleague', 'embarrass', 'foreign',
+                'independent', 'maintenance', 'privilege', 'restaurant', 'rhythm'
+            ];
+            
+            const word = correctWords[Math.floor(Math.random() * correctWords.length)];
+            const typoTypes = ['delete', 'swap', 'replace', 'insert'];
+            const typoType = typoTypes[Math.floor(Math.random() * typoTypes.length)];
+            
+            let typo = word;
+            const pos = Math.floor(Math.random() * word.length);
+            
+            switch(typoType) {
+                case 'delete':
+                    // Remove a character
+                    typo = word.slice(0, pos) + word.slice(pos + 1);
+                    break;
+                case 'swap':
+                    // Swap two adjacent characters
+                    if (pos < word.length - 1) {
+                        typo = word.slice(0, pos) + word[pos + 1] + word[pos] + word.slice(pos + 2);
+                    }
+                    break;
+                case 'replace':
+                    // Replace with wrong character
+                    const chars = 'abcdefghijklmnopqrstuvwxyz';
+                    const wrongChar = chars[Math.floor(Math.random() * chars.length)];
+                    typo = word.slice(0, pos) + wrongChar + word.slice(pos + 1);
+                    break;
+                case 'insert':
+                    // Insert random character
+                    const insertChar = 'abcdefghijklmnopqrstuvwxyz'[Math.floor(Math.random() * 26)];
+                    typo = word.slice(0, pos) + insertChar + word.slice(pos);
+                    break;
+            }
+            
+            document.getElementById('inputWord').value = typo;
+            getSuggestions();
+        }
+
         function loadCommonWords() {
             document.getElementById('dictionary').value = `the
 be
