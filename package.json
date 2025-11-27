@@ -1,0 +1,24 @@
+{
+  "name": "ai-ia-2",
+  "version": "1.0.0",
+  "description": "An interactive web-based collection of 20 AI problems covering search algorithms, optimization, NLP, expert systems, and web applications. Each problem features a unique, custom-designed UI that reflects its purpose.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/1at23cs079-Mahi/AI-LAB-IA.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/1at23cs079-Mahi/AI-LAB-IA/issues"
+  },
+  "homepage": "https://github.com/1at23cs079-Mahi/AI-LAB-IA#readme",
+  "devDependencies": {
+    "tailwindcss": "^4.1.17"
+  }
+}
