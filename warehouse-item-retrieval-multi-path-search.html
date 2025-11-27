@@ -258,7 +258,96 @@
                 </div>
             `;
             
-            document.getElementById('solutionGrid').innerHTML = '';
+            // Render comparison grids
+            const solutionGrid = document.getElementById('solutionGrid');
+            solutionGrid.innerHTML = '<h4 style="color: #f57f17; margin: 15px 0;">Path Comparison</h4>';
+            
+            // A* Grid
+            const astarContainer = document.createElement('div');
+            astarContainer.innerHTML = '<h5 style="color: #424242;">A* Path</h5>';
+            const astarGrid = document.createElement('div');
+            astarGrid.className = 'grid';
+            astarGrid.style.gridTemplateColumns = `repeat(${SIZE}, 1fr)`;
+            
+            const astarPathSet = new Set(astar.path.map(p => `${p.x},${p.y}`));
+            
+            for (let i = 0; i < SIZE; i++) {
+                for (let j = 0; j < SIZE; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.style.width = '40px';
+                    cell.style.height = '40px';
+                    const key = `${i},${j}`;
+                    
+                    if (i === base.x && j === base.y) {
+                        cell.style.background = '#3498db';
+                        cell.textContent = 'B';
+                        cell.style.color = 'white';
+                    } else {
+                        const itemIdx = items.findIndex(it => it.x === i && it.y === j);
+                        if (itemIdx !== -1) {
+                            cell.style.background = '#f39c12';
+                            cell.textContent = (itemIdx + 1).toString();
+                            cell.style.color = 'white';
+                        } else if (grid[i][j] === 1) {
+                            cell.style.background = '#7f8c8d';
+                            cell.textContent = 'X';
+                            cell.style.color = 'white';
+                        } else if (astarPathSet.has(key)) {
+                            cell.style.background = '#2ecc71';
+                            cell.textContent = '→';
+                            cell.style.color = 'white';
+                        }
+                    }
+                    astarGrid.appendChild(cell);
+                }
+            }
+            astarContainer.appendChild(astarGrid);
+            
+            // Greedy Grid
+            const greedyContainer = document.createElement('div');
+            greedyContainer.innerHTML = '<h5 style="color: #424242; margin-top: 20px;">Greedy Best-First Path</h5>';
+            const greedyGrid = document.createElement('div');
+            greedyGrid.className = 'grid';
+            greedyGrid.style.gridTemplateColumns = `repeat(${SIZE}, 1fr)`;
+            
+            const greedyPathSet = new Set(greedy.path.map(p => `${p.x},${p.y}`));
+            
+            for (let i = 0; i < SIZE; i++) {
+                for (let j = 0; j < SIZE; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.style.width = '40px';
+                    cell.style.height = '40px';
+                    const key = `${i},${j}`;
+                    
+                    if (i === base.x && j === base.y) {
+                        cell.style.background = '#3498db';
+                        cell.textContent = 'B';
+                        cell.style.color = 'white';
+                    } else {
+                        const itemIdx = items.findIndex(it => it.x === i && it.y === j);
+                        if (itemIdx !== -1) {
+                            cell.style.background = '#f39c12';
+                            cell.textContent = (itemIdx + 1).toString();
+                            cell.style.color = 'white';
+                        } else if (grid[i][j] === 1) {
+                            cell.style.background = '#7f8c8d';
+                            cell.textContent = 'X';
+                            cell.style.color = 'white';
+                        } else if (greedyPathSet.has(key)) {
+                            cell.style.background = '#9b59b6';
+                            cell.textContent = '→';
+                            cell.style.color = 'white';
+                        }
+                    }
+                    greedyGrid.appendChild(cell);
+                }
+            }
+            greedyContainer.appendChild(greedyGrid);
+            
+            solutionGrid.appendChild(astarContainer);
+            solutionGrid.appendChild(greedyContainer);
         }
 
         function displayResult(result, alg) {
@@ -270,6 +359,7 @@
             const output = document.getElementById('output');
             const resultContent = document.getElementById('resultContent');
             const stats = document.getElementById('stats');
+            const solutionGrid = document.getElementById('solutionGrid');
             
             output.style.display = 'block';
             
@@ -294,7 +384,50 @@
                 </div>
             `;
 
-            document.getElementById('solutionGrid').innerHTML = '';
+            // Render solution grid with path
+            const gridDiv = document.createElement('div');
+            gridDiv.className = 'grid';
+            gridDiv.style.gridTemplateColumns = `repeat(${SIZE}, 1fr)`;
+            
+            const pathSet = new Set(result.path.map(p => `${p.x},${p.y}`));
+            
+            for (let i = 0; i < SIZE; i++) {
+                for (let j = 0; j < SIZE; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.style.width = '40px';
+                    cell.style.height = '40px';
+                    const key = `${i},${j}`;
+                    
+                    if (i === base.x && j === base.y) {
+                        cell.style.background = '#3498db';
+                        cell.textContent = 'B';
+                        cell.style.color = 'white';
+                        cell.style.fontWeight = 'bold';
+                    } else {
+                        const itemIdx = items.findIndex(it => it.x === i && it.y === j);
+                        if (itemIdx !== -1) {
+                            cell.style.background = '#f39c12';
+                            cell.textContent = (itemIdx + 1).toString();
+                            cell.style.color = 'white';
+                            cell.style.fontWeight = 'bold';
+                        } else if (grid[i][j] === 1) {
+                            cell.style.background = '#7f8c8d';
+                            cell.textContent = 'X';
+                            cell.style.color = 'white';
+                        } else if (pathSet.has(key)) {
+                            cell.style.background = '#2ecc71';
+                            cell.textContent = '→';
+                            cell.style.color = 'white';
+                        }
+                    }
+                    
+                    gridDiv.appendChild(cell);
+                }
+            }
+            
+            solutionGrid.innerHTML = '';
+            solutionGrid.appendChild(gridDiv);
         }
 
         function resetWarehouse() {
