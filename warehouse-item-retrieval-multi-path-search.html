@@ -43,6 +43,7 @@
             <button class="btn" onclick="solveAStar()">Solve with A*</button>
             <button class="btn" onclick="solveGreedy()">Solve with Greedy Best-First</button>
             <button class="btn" onclick="compareAlgorithms()">Compare Both</button>
+            <button class="btn btn-secondary" onclick="randomizeWarehouse()">🎲 Randomize</button>
             <button class="btn btn-secondary" onclick="resetWarehouse()">Reset</button>
         </div>
 
@@ -298,6 +299,35 @@
         function resetWarehouse() {
             initGrid();
             document.getElementById('output').style.display = 'none';
+        }
+
+        function randomizeWarehouse() {
+            grid = Array(SIZE).fill(null).map(() => Array(SIZE).fill(0));
+            
+            // Random base position
+            base = {x: Math.floor(Math.random() * SIZE), y: Math.floor(Math.random() * SIZE)};
+            
+            // Random items (ensure they don't overlap)
+            items = [];
+            for (let i = 0; i < 3; i++) {
+                let pos;
+                do {
+                    pos = {x: Math.floor(Math.random() * SIZE), y: Math.floor(Math.random() * SIZE)};
+                } while ((pos.x === base.x && pos.y === base.y) || items.some(it => it.x === pos.x && it.y === pos.y));
+                items.push(pos);
+            }
+            
+            // Random obstacles (15-25% of cells)
+            const numObstacles = Math.floor(Math.random() * 8) + 8;
+            for (let i = 0; i < numObstacles; i++) {
+                const x = Math.floor(Math.random() * SIZE);
+                const y = Math.floor(Math.random() * SIZE);
+                if ((x !== base.x || y !== base.y) && !items.some(it => it.x === x && it.y === y)) {
+                    grid[x][y] = 1;
+                }
+            }
+            
+            renderGrid();
         }
 
         initGrid();

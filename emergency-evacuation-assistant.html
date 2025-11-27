@@ -33,12 +33,19 @@
         <div class="controls">
             <h3>Building Layout</h3>
             <div class="control-group">
-                <label>Congestion levels: Green (1), Yellow (3), Orange (5), Red (10)</label>
+                <label>Mode Selection:</label>
+                <div style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
+                    <button class="btn btn-secondary" onclick="setCellMode('start')" id="mode-start" style="padding: 5px 15px;">🚶 Start</button>
+                    <button class="btn btn-secondary" onclick="setCellMode('exit')" id="mode-exit" style="padding: 5px 15px;">🚪 Exit</button>
+                    <button class="btn btn-secondary" onclick="setCellMode('congestion')" id="mode-congestion" style="padding: 5px 15px; opacity: 1;">👥 Congestion</button>
+                </div>
+                <label>Current Mode: <strong id="currentMode">Congestion Level</strong> - Congestion levels: Green (1), Yellow (3), Orange (5), Red (10)</label>
                 <div id="gridSetup" class="visualization"></div>
             </div>
-            <button class="btn" onclick="findEvacuationPath()">Find Fastest Path</button>
-            <button class="btn btn-secondary" onclick="randomCongestion()">Random Congestion</button>
-            <button class="btn btn-secondary" onclick="resetBuilding()">Reset</button>
+            <button class="btn" onclick="findEvacuationPath()">🔍 Find Fastest Path</button>
+            <button class="btn" onclick="animateEvacuation()">▶️ Animate Evacuation</button>
+            <button class="btn btn-secondary" onclick="randomCongestion()">🎲 Randomize</button>
+            <button class="btn btn-secondary" onclick="resetBuilding()">🔄 Reset</button>
         </div>
 
         <div id="output" class="output" style="display:none;">
@@ -56,6 +63,17 @@
         let congestion = [];
         let start = {x: 5, y: 5};
         let exit = {x: 0, y: 0};
+        let cellMode = 'congestion';
+        let animationInterval = null;
+        let lastResult = null;
+
+        function setCellMode(mode) {
+            cellMode = mode;
+            document.querySelectorAll('[id^="mode-"]').forEach(btn => btn.style.opacity = '0.6');
+            document.getElementById(`mode-${mode}`).style.opacity = '1';
+            const modeNames = {'start': '🚶 Start Position', 'exit': '🚪 Exit Position', 'congestion': 'Congestion Level'};
+            document.getElementById('currentMode').textContent = modeNames[mode];
+        }
 
         function initBuilding() {
             congestion = Array(SIZE).fill(null).map(() => 
@@ -78,7 +96,13 @@
                     cell.className = 'cell';
                     cell.style.cursor = 'pointer';
                     cell.onclick = () => {
-                        if ((i !== start.x || j !== start.y) && (i !== exit.x || j !== exit.y)) {
+                        if (cellMode === 'start') {
+                            start = {x: i, y: j};
+                            renderBuilding();
+                        } else if (cellMode === 'exit') {
+                            exit = {x: i, y: j};
+                            renderBuilding();
+                        } else if ((i !== start.x || j !== start.y) && (i !== exit.x || j !== exit.y)) {
                             congestion[i][j] = (congestion[i][j] % 10) + 1;
                             renderBuilding();
                         }
@@ -142,6 +166,7 @@
 
         function findEvacuationPath() {
             const result = uniformCostSearch();
+            lastResult = result;
             if (!result) {
                 alert('No path found!');
                 return;
@@ -221,8 +246,79 @@
         }
 
         function resetBuilding() {
+            if (animationInterval) clearInterval(animationInterval);
             initBuilding();
             document.getElementById('output').style.display = 'none';
+        }
+
+        function animateEvacuation() {
+            if (!lastResult) {
+                alert('Please find evacuation path first!');
+                return;
+            }
+            
+            const solutionGrid = document.getElementById('solutionGrid');
+            const gridDiv = document.createElement('div');
+            gridDiv.className = 'grid';
+            gridDiv.style.gridTemplateColumns = `repeat(${SIZE}, 1fr)`;
+            
+            let step = 0;
+            let accumulatedCost = 0;
+            if (animationInterval) clearInterval(animationInterval);
+            
+            animationInterval = setInterval(() => {
+                if (step >= lastResult.path.length) {
+                    clearInterval(animationInterval);
+                    return;
+                }
+                
+                if (step > 0) {
+                    const pos = lastResult.path[step];
+                    accumulatedCost += congestion[pos.x][pos.y];
+                }
+                
+                gridDiv.innerHTML = '';
+                
+                for (let i = 0; i < SIZE; i++) {
+                    for (let j = 0; j < SIZE; j++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'cell';
+                        
+                        const onPath = lastResult.path.some((p, idx) => p.x === i && p.y === j && idx <= step);
+                        const isCurrentPos = lastResult.path[step] && i === lastResult.path[step].x && j === lastResult.path[step].y;
+                        
+                        if (i === start.x && j === start.y) {
+                            cell.style.background = '#3498db';
+                            cell.textContent = 'S';
+                            cell.style.color = 'white';
+                        } else if (i === exit.x && j === exit.y) {
+                            cell.style.background = '#2ecc71';
+                            cell.textContent = 'E';
+                            cell.style.color = 'white';
+                        } else if (isCurrentPos) {
+                            cell.style.background = '#ffff00';
+                            cell.style.border = '3px solid #ff0000';
+                            cell.textContent = '🚶';
+                            cell.style.fontSize = '20px';
+                        } else if (onPath) {
+                            cell.style.background = '#667eea';
+                            cell.textContent = congestion[i][j];
+                            cell.style.color = 'white';
+                        } else {
+                            const level = congestion[i][j];
+                            const colors = {1: '#d5f4e6', 3: '#fff9c4', 5: '#ffcc80', 10: '#ef9a9a'};
+                            cell.style.background = colors[level] || '#ffebee';
+                            cell.textContent = level;
+                        }
+                        
+                        gridDiv.appendChild(cell);
+                    }
+                }
+                
+                solutionGrid.innerHTML = `<h4 style="color: #3b5998; margin: 10px 0;">Step ${step + 1} of ${lastResult.path.length} - Accumulated Cost: ${accumulatedCost}</h4>`;
+                solutionGrid.appendChild(gridDiv);
+                step++;
+            }, 600);
         }
 
         initBuilding();

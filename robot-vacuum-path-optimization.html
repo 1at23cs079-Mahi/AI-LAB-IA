@@ -41,12 +41,20 @@
         <div class="controls">
             <h3>Configure Room</h3>
             <div class="control-group">
-                <label>Click cells to toggle obstacles (black = obstacle, green = start, red = goal):</label>
+                <label>Select Mode:</label>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px;">
+                    <button class="btn btn-secondary" onclick="setCellMode('start')" id="mode-start" style="background: #00d4ff; color: #0a0e27;">🤖 Start</button>
+                    <button class="btn btn-secondary" onclick="setCellMode('goal')" id="mode-goal" style="background: #ff0080; color: white;">🎯 Goal</button>
+                    <button class="btn btn-secondary" onclick="setCellMode('obstacle')" id="mode-obstacle" style="background: #2a3550; color: #00d4ff;">⬛ Obstacle</button>
+                    <button class="btn btn-secondary" onclick="setCellMode('clear')" id="mode-clear" style="background: white; color: #0a0e27;">⬜ Clear</button>
+                </div>
+                <label>Current Mode: <strong id="currentMode">Obstacle</strong> - Click cells to place</label>
                 <div id="gridSetup" class="visualization"></div>
             </div>
-            <button class="btn" onclick="solveUCS()">Find Optimal Path (UCS)</button>
-            <button class="btn btn-secondary" onclick="resetGrid()">Reset Grid</button>
-            <button class="btn btn-secondary" onclick="randomObstacles()">Random Obstacles</button>
+            <button class="btn" onclick="solveUCS()">🔍 Find Optimal Path (UCS)</button>
+            <button class="btn" onclick="animatePath()">▶️ Animate Path</button>
+            <button class="btn btn-secondary" onclick="randomObstacles()">🎲 Randomize</button>
+            <button class="btn btn-secondary" onclick="resetGrid()">🔄 Reset</button>
         </div>
 
         <div id="output" class="output" style="display:none;">
@@ -64,9 +72,23 @@
         let grid = [];
         let start = {x: 0, y: 0};
         let goal = {x: 4, y: 4};
+        let cellMode = 'obstacle';
+        let animationInterval = null;
+        let lastResult = null;
+
+        function setCellMode(mode) {
+            cellMode = mode;
+            document.querySelectorAll('[id^="mode-"]').forEach(btn => {
+                btn.style.opacity = '0.6';
+            });
+            document.getElementById(`mode-${mode}`).style.opacity = '1';
+            const modeNames = {'start': '🤖 Start', 'goal': '🎯 Goal', 'obstacle': '⬛ Obstacle', 'clear': '⬜ Clear'};
+            document.getElementById('currentMode').textContent = modeNames[mode];
+        }
 
         function initGrid() {
             grid = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(0));
+            grid[1][2] = grid[2][1] = grid[3][3] = 1;
             renderSetupGrid();
         }
 
@@ -101,14 +123,33 @@
         }
 
         function toggleCell(x, y) {
-            if ((x === start.x && y === start.y) || (x === goal.x && y === goal.y)) return;
-            grid[x][y] = grid[x][y] === 0 ? 1 : 0;
+            if (cellMode === 'start') {
+                start = {x, y};
+                if (grid[x][y] === 1) grid[x][y] = 0;
+            } else if (cellMode === 'goal') {
+                goal = {x, y};
+                if (grid[x][y] === 1) grid[x][y] = 0;
+            } else if (cellMode === 'obstacle') {
+                if ((x === start.x && y === start.y) || (x === goal.x && y === goal.y)) return;
+                grid[x][y] = 1;
+            } else if (cellMode === 'clear') {
+                if ((x === start.x && y === start.y) || (x === goal.x && y === goal.y)) return;
+                grid[x][y] = 0;
+            }
             renderSetupGrid();
         }
 
         function randomObstacles() {
             grid = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(0));
-            const numObstacles = Math.floor(Math.random() * 8) + 3;
+            
+            // Random start and goal
+            start = {x: Math.floor(Math.random() * GRID_SIZE), y: Math.floor(Math.random() * GRID_SIZE)};
+            do {
+                goal = {x: Math.floor(Math.random() * GRID_SIZE), y: Math.floor(Math.random() * GRID_SIZE)};
+            } while (goal.x === start.x && goal.y === start.y);
+            
+            // Random obstacles (25-40% of cells)
+            const numObstacles = Math.floor(Math.random() * 6) + 5;
             for (let i = 0; i < numObstacles; i++) {
                 const x = Math.floor(Math.random() * GRID_SIZE);
                 const y = Math.floor(Math.random() * GRID_SIZE);
@@ -120,6 +161,7 @@
         }
 
         function resetGrid() {
+            if (animationInterval) clearInterval(animationInterval);
             initGrid();
             document.getElementById('output').style.display = 'none';
         }
@@ -203,11 +245,13 @@
 
         function solveUCS() {
             const result = uniformCostSearch();
+            lastResult = result;
             const output = document.getElementById('output');
             const resultContent = document.getElementById('resultContent');
             const solutionGrid = document.getElementById('solutionGrid');
             const stats = document.getElementById('stats');
             
+            if (animationInterval) clearInterval(animationInterval);
             output.style.display = 'block';
             
             if (result) {
@@ -254,6 +298,7 @@
                 solutionGrid.innerHTML = '';
                 solutionGrid.appendChild(gridDiv);
                 
+                const efficiency = ((result.path.length - 1) / result.nodesExplored * 100).toFixed(1);
                 stats.innerHTML = `
                     <div class="stat-card">
                         <div class="label">Path Length</div>
@@ -268,8 +313,8 @@
                         <div class="value">${result.nodesExplored}</div>
                     </div>
                     <div class="stat-card">
-                        <div class="label">Algorithm</div>
-                        <div class="value" style="font-size:1.2rem">UCS</div>
+                        <div class="label">Search Efficiency</div>
+                        <div class="value">${efficiency}%</div>
                     </div>
                 `;
             } else {
@@ -281,6 +326,69 @@
                 solutionGrid.innerHTML = '';
                 stats.innerHTML = '';
             }
+        }
+
+        function animatePath() {
+            if (!lastResult) {
+                alert('Please solve the path first!');
+                return;
+            }
+            
+            const solutionGrid = document.getElementById('solutionGrid');
+            const gridDiv = document.createElement('div');
+            gridDiv.className = 'grid';
+            gridDiv.style.gridTemplateColumns = `repeat(${GRID_SIZE}, 1fr)`;
+            
+            let step = 0;
+            if (animationInterval) clearInterval(animationInterval);
+            
+            animationInterval = setInterval(() => {
+                if (step >= lastResult.path.length) {
+                    clearInterval(animationInterval);
+                    return;
+                }
+                
+                gridDiv.innerHTML = '';
+                const visitedSet = new Set(lastResult.visited);
+                
+                for (let i = 0; i < GRID_SIZE; i++) {
+                    for (let j = 0; j < GRID_SIZE; j++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'cell';
+                        const key = `${i},${j}`;
+                        
+                        const onPath = lastResult.path.some((p, idx) => p.x === i && p.y === j && idx <= step);
+                        const isCurrentPos = lastResult.path[step] && i === lastResult.path[step].x && j === lastResult.path[step].y;
+                        
+                        if (i === start.x && j === start.y) {
+                            cell.classList.add('start');
+                            cell.textContent = 'S';
+                        } else if (i === goal.x && j === goal.y) {
+                            cell.classList.add('goal');
+                            cell.textContent = 'G';
+                        } else if (isCurrentPos) {
+                            cell.style.background = '#ffff00';
+                            cell.style.border = '3px solid #00d4ff';
+                            cell.textContent = '🤖';
+                            cell.style.fontSize = '20px';
+                        } else if (onPath) {
+                            cell.classList.add('path');
+                            cell.textContent = '→';
+                        } else if (grid[i][j] === 1) {
+                            cell.classList.add('obstacle');
+                            cell.textContent = '■';
+                        } else if (visitedSet.has(key)) {
+                            cell.classList.add('visited');
+                        }
+                        
+                        gridDiv.appendChild(cell);
+                    }
+                }
+                
+                solutionGrid.innerHTML = `<h4 style="color: #00d4ff; margin: 10px 0;">Step ${step + 1} of ${lastResult.path.length} - Cost: ${step}</h4>`;
+                solutionGrid.appendChild(gridDiv);
+                step++;
+            }, 500);
         }
 
         initGrid();
