@@ -8,19 +8,30 @@ An interactive web-based collection of 20 AI problems covering search algorithms
 ![CSS3](https://img.shields.io/badge/CSS3-1572B6?logo=css3&logoColor=white)
 ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?logo=javascript&logoColor=black)
 
+## 🎓 Batch Selection for AI Internals
+
+**Start here:** [Select Your Batch (B1/B2/B3)](https://ai-lab-ia.vercel.app/welcome.html)
+
+### Batch Assignments:
+- **Batch B1**: Problems 1-6 (Search & Pathfinding)
+- **Batch B2**: Problems 7-12 (CSP & Expert Systems)  
+- **Batch B3**: Problems 13-20 (NLP & Applications)
+
+[View All 20 Problems](https://ai-lab-ia.vercel.app/)
+
 ## 🚀 Quick Start
 
 ```bash
 # Option 1: Clone and open
-git clone https://github.com/yourusername/ai-problems-collection.git
+git clone https://github.com/1at23cs079-Mahi/AI-LAB-IA.git
 cd ai-problems-collection
-# Open index.html in your browser (double-click or right-click → Open with)
+# Open welcome.html in your browser to select your batch
 
 # Option 2: Download ZIP
-# Download ZIP from GitHub → Extract → Open index.html
+# Download ZIP from GitHub → Extract → Open welcome.html
 
 # Option 3: Live Server (if you have it)
-# Open in VS Code → Right-click index.html → Open with Live Server
+# Open in VS Code → Right-click welcome.html → Open with Live Server
 ```
 
 **That's it!** No npm install, no build process, no server setup required. 🎉

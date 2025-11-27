@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Lab - Welcome</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="modern-ui.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        .welcome-container {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 30px;
+            padding: 60px 50px;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.3);
+            max-width: 1000px;
+            width: 100%;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .header h1 {
+            font-size: 3.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+
+        .header .subtitle {
+            font-size: 1.4rem;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .header .date-info {
+            font-size: 1.1rem;
+            color: #999;
+            font-style: italic;
+        }
+
+        .batch-selection-section {
+            margin: 40px 0;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+
+        .batch-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .batch-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            padding: 35px 25px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .batch-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .batch-card:hover::before {
+            opacity: 1;
+        }
+
+        .batch-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 20px 50px rgba(102, 126, 234, 0.5);
+        }
+
+        .batch-card.selected {
+            animation: pulse 1s infinite;
+            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.5), 0 20px 50px rgba(102, 126, 234, 0.6);
+        }
+
+        .batch-card h2 {
+            font-size: 3rem;
+            color: white;
+            margin-bottom: 12px;
+            font-weight: 700;
+        }
+
+        .batch-card .batch-label {
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.95);
+            font-weight: 600;
+            margin-bottom: 18px;
+        }
+
+        .batch-card .problems-range {
+            background: rgba(255, 255, 255, 0.25);
+            padding: 10px 18px;
+            border-radius: 12px;
+            font-size: 1.05rem;
+            color: white;
+            font-weight: 500;
+            margin-top: 12px;
+            backdrop-filter: blur(10px);
+        }
+
+        .batch-card .problem-count {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 0.9rem;
+            margin-top: 8px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 40px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 18px 45px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            box-shadow: 0 10px 30px rgba(245, 87, 108, 0.3);
+            display: none;
+        }
+
+        .btn-primary.show {
+            display: inline-block;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(245, 87, 108, 0.5);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #764ba2;
+            border: 3px solid #764ba2;
+            box-shadow: 0 5px 20px rgba(118, 75, 162, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: #764ba2;
+            color: white;
+            transform: translateY(-5px);
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            padding: 25px;
+            border-radius: 15px;
+            margin-top: 40px;
+            text-align: center;
+        }
+
+        .info-box h3 {
+            color: #d63031;
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+        }
+
+        .info-box p {
+            color: #2d3436;
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 768px) {
+            .welcome-container {
+                padding: 40px 30px;
+            }
+
+            .header h1 {
+                font-size: 2.2rem;
+            }
+
+            .batch-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="welcome-container">
+        <div class="header">
+            <h1>🎓 AI Lab Internals</h1>
+            <p class="subtitle">Interactive Problem Suite</p>
+            <p class="date-info">Select your batch to begin</p>
+        </div>
+
+        <div class="batch-selection-section">
+            <h2 class="section-title">Choose Your Batch</h2>
+            
+            <div class="batch-grid">
+                <div class="batch-card" id="batch-b1" onclick="selectBatch('B1')">
+                    <h2>B1</h2>
+                    <div class="batch-label">Batch 1</div>
+                    <div class="problems-range">Problems 1-6</div>
+                    <div class="problem-count">Search & Pathfinding</div>
+                </div>
+
+                <div class="batch-card" id="batch-b2" onclick="selectBatch('B2')">
+                    <h2>B2</h2>
+                    <div class="batch-label">Batch 2</div>
+                    <div class="problems-range">Problems 7-12</div>
+                    <div class="problem-count">CSP & Expert Systems</div>
+                </div>
+
+                <div class="batch-card" id="batch-b3" onclick="selectBatch('B3')">
+                    <h2>B3</h2>
+                    <div class="batch-label">Batch 3</div>
+                    <div class="problems-range">Problems 13-20</div>
+                    <div class="problem-count">NLP & Applications</div>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn btn-primary" id="continueBtn" onclick="continueToBatch()">
+                    Continue to Problems →
+                </button>
+                <a href="index.html" class="btn btn-secondary">
+                    View All 20 Problems
+                </a>
+            </div>
+        </div>
+
+        <div class="info-box">
+            <h3>📋 Instructions</h3>
+            <p>Select your assigned batch above to access your specific problem set. Each batch contains unique AI algorithms and applications for hands-on learning.</p>
+        </div>
+    </div>
+
+    <script>
+        let selectedBatch = null;
+
+        function selectBatch(batch) {
+            // Remove previous selection
+            document.querySelectorAll('.batch-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+
+            // Add selection to clicked card
+            document.getElementById(`batch-${batch.toLowerCase()}`).classList.add('selected');
+            
+            // Store selection
+            selectedBatch = batch;
+            localStorage.setItem('selectedBatch', batch);
+
+            // Show continue button
+            document.getElementById('continueBtn').classList.add('show');
+        }
+
+        function continueToBatch() {
+            if (selectedBatch) {
+                window.location.href = `batch-${selectedBatch.toLowerCase()}.html`;
+            } else {
+                alert('Please select a batch first!');
+            }
+        }
+
+        // Check if batch was previously selected
+        window.onload = function() {
+            const savedBatch = localStorage.getItem('selectedBatch');
+            if (savedBatch) {
+                selectBatch(savedBatch);
+            }
+        };
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.key === '1') selectBatch('B1');
+            if (e.key === '2') selectBatch('B2');
+            if (e.key === '3') selectBatch('B3');
+            if (e.key === 'Enter' && selectedBatch) continueToBatch();
+        });
+    </script>
+</body>
+</html>
