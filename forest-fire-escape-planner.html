@@ -252,10 +252,130 @@
                 });
             }
 
-            document.getElementById('output').style.display = 'block';
-            document.getElementById('resultContent').innerHTML = `
-                <div class="alert alert-error">✗ No escape path found! Fire spreads too fast.</div>
+            // No path found - show why with visualization
+            displayFailureReason(fireTimeline, visited);
+        }
+
+        function displayFailureReason(fireTimeline, visited) {
+            const output = document.getElementById('output');
+            const resultContent = document.getElementById('resultContent');
+            const stats = document.getElementById('stats');
+            const animationContainer = document.getElementById('animationContainer');
+            
+            output.style.display = 'block';
+            
+            // Analyze why path failed
+            const reachableCells = new Set();
+            visited.forEach(v => {
+                const [x, y, t] = v.split(',').map(Number);
+                reachableCells.add(`${x},${y}`);
+            });
+            
+            const exitBlocked = !reachableCells.has(`${exit.x},${exit.y}`);
+            const exitBurnedTime = findWhenExitBurned(fireTimeline);
+            
+            resultContent.innerHTML = `
+                <div class="alert alert-error">
+                    ✗ No escape path found! 
+                    ${exitBlocked ? 
+                        `Exit became unreachable ${exitBurnedTime !== -1 ? `(burned at ${exitBurnedTime} min)` : '(blocked by obstacles)'}` : 
+                        'Fire spread too fast - all paths blocked'}
+                </div>
             `;
+
+            stats.innerHTML = `
+                <div class="stat-card">
+                    <div class="label">Cells Explored</div>
+                    <div class="value">${reachableCells.size}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Exit Status</div>
+                    <div class="value" style="color: #ff4444;">${exitBurnedTime !== -1 ? `🔥 ${exitBurnedTime}min` : '🚫 Blocked'}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Fire Sources</div>
+                    <div class="value">${fireStart.length}</div>
+                </div>
+            `;
+
+            // Animate the failure - show how fire blocked the path
+            animationContainer.innerHTML = '<h4>Fire Spread Analysis - Why Path Failed</h4>';
+            const gridDiv = document.createElement('div');
+            gridDiv.className = 'grid';
+            gridDiv.style.gridTemplateColumns = `repeat(${SIZE}, 1fr)`;
+            
+            let step = 0;
+            if (animationInterval) clearInterval(animationInterval);
+            
+            animationInterval = setInterval(() => {
+                if (step >= fireTimeline.length) {
+                    clearInterval(animationInterval);
+                    return;
+                }
+                
+                gridDiv.innerHTML = '';
+                const currentGrid = fireTimeline[step];
+                
+                for (let i = 0; i < SIZE; i++) {
+                    for (let j = 0; j < SIZE; j++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'cell';
+                        
+                        const wasReachable = reachableCells.has(`${i},${j}`);
+                        
+                        if (i === start.x && j === start.y) {
+                            cell.classList.add('start');
+                            cell.textContent = 'S';
+                            cell.style.fontSize = '20px';
+                        } else if (i === exit.x && j === exit.y) {
+                            if (currentGrid[i][j] === 2) {
+                                cell.style.background = '#ff0000';
+                                cell.textContent = '🔥';
+                                cell.title = 'Exit burned!';
+                            } else {
+                                cell.classList.add('goal');
+                                cell.textContent = 'E';
+                                cell.style.fontSize = '20px';
+                            }
+                        } else if (currentGrid[i][j] === 1) {
+                            cell.classList.add('obstacle');
+                            cell.textContent = '⬛';
+                        } else if (currentGrid[i][j] === 2) {
+                            cell.classList.add('fire');
+                            cell.textContent = '🔥';
+                        } else if (wasReachable && step === 0) {
+                            cell.style.background = '#004400';
+                            cell.style.opacity = '0.5';
+                            cell.title = 'Explored area';
+                        }
+                        
+                        gridDiv.appendChild(cell);
+                    }
+                }
+                
+                const timeInfo = document.createElement('p');
+                timeInfo.style.margin = '10px 0';
+                timeInfo.style.color = '#ffcccc';
+                timeInfo.innerHTML = `<strong>Time: ${step} minutes</strong> - ${
+                    step === exitBurnedTime ? '🔥 <strong>Exit blocked by fire!</strong>' :
+                    step === 0 ? 'Green cells show areas you could reach' :
+                    'Fire spreading...'
+                }`;
+                
+                animationContainer.innerHTML = '<h4>Fire Spread Analysis - Why Path Failed</h4>';
+                animationContainer.appendChild(timeInfo);
+                animationContainer.appendChild(gridDiv);
+                step++;
+            }, 700);
+        }
+
+        function findWhenExitBurned(fireTimeline) {
+            for (let t = 0; t < fireTimeline.length; t++) {
+                if (fireTimeline[t][exit.x][exit.y] === 2) {
+                    return t;
+                }
+            }
+            return -1;
         }
 
         function displayResult(path, time, fireTimeline) {
