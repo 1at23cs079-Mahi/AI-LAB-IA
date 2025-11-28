@@ -58,6 +58,7 @@
             </div>
             <button class="btn" onclick="findRoutes()">Find Routes</button>
             <button class="btn btn-secondary" onclick="randomLocations()">Random Locations</button>
+            <button class="btn btn-secondary" onclick="demoSampleRoute()">Demo: Downtown → Airport</button>
         </div>
 
         <div id="output" class="output" style="display:none;">
@@ -268,6 +269,12 @@
             }
             document.getElementById('startLocation').value = start;
             document.getElementById('endLocation').value = end;
+        }
+
+        function demoSampleRoute() {
+            document.getElementById('startLocation').value = 'downtown';
+            document.getElementById('endLocation').value = 'airport';
+            findRoutes();
         }
 
         function drawSimpleRoute(startName, endName, routeOptions, shortest, fastest) {
