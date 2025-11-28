@@ -63,6 +63,10 @@
         <div id="output" class="output" style="display:none;">
             <h3>Route Comparison</h3>
             <div id="resultContent"></div>
+            <div id="map" style="background: #ffffff; border: 2px solid #2d6a4f; border-radius: 10px; margin-top: 20px; padding: 10px;">
+                <h4 style="color:#1b4332; margin: 0 0 10px 0;">🗺️ Simple Route Map</h4>
+                <canvas id="routeCanvas" width="500" height="300" style="width:100%; max-width:600px; height:300px; border:1px dashed #52b788; border-radius:8px; background:#f8fff9"></canvas>
+            </div>
         </div>
     </div>
 
@@ -240,6 +244,9 @@
                     For the shortest distance, take <strong>${shortest.name}</strong> (${shortest.distance} km).
                 </div>
             `;
+
+            // Draw simple route visualization
+            drawSimpleRoute(startName, endName, routeOptions, shortest, fastest);
         }
 
         function calculateRouteScore(route) {
@@ -261,6 +268,97 @@
             }
             document.getElementById('startLocation').value = start;
             document.getElementById('endLocation').value = end;
+        }
+
+        function drawSimpleRoute(startName, endName, routeOptions, shortest, fastest) {
+            const startKey = Object.keys(locations).find(k => locations[k].name === startName);
+            const endKey = Object.keys(locations).find(k => locations[k].name === endName);
+            const canvas = document.getElementById('routeCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            // Clear
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Padding and scale
+            const pad = 30;
+            const maxX = Math.max(...Object.values(locations).map(l => l.x));
+            const maxY = Math.max(...Object.values(locations).map(l => l.y));
+            const scaleX = (canvas.width - 2*pad) / (maxX || 1);
+            const scaleY = (canvas.height - 2*pad) / (maxY || 1);
+
+            // Helper to map coords
+            const toCanvas = (p) => ({
+                x: pad + p.x * scaleX,
+                y: canvas.height - (pad + p.y * scaleY)
+            });
+
+            // Draw grid background
+            ctx.strokeStyle = '#e0f2f1';
+            ctx.lineWidth = 1;
+            for (let gx = pad; gx <= canvas.width-pad; gx += 50) {
+                ctx.beginPath(); ctx.moveTo(gx, pad); ctx.lineTo(gx, canvas.height-pad); ctx.stroke();
+            }
+            for (let gy = pad; gy <= canvas.height-pad; gy += 50) {
+                ctx.beginPath(); ctx.moveTo(pad, gy); ctx.lineTo(canvas.width-pad, gy); ctx.stroke();
+            }
+
+            // Draw all locations
+            for (const key of Object.keys(locations)) {
+                const loc = toCanvas(locations[key]);
+                ctx.fillStyle = key === startKey ? '#2d6a4f' : key === endKey ? '#1b4332' : '#74c69d';
+                ctx.strokeStyle = '#2d6a4f';
+                ctx.beginPath(); ctx.arc(loc.x, loc.y, 6, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+                ctx.fillStyle = '#1b4332';
+                ctx.font = '12px sans-serif';
+                ctx.fillText(locations[key].name, loc.x + 8, loc.y - 8);
+            }
+
+            // Draw straight line route (baseline)
+            const s = toCanvas(locations[startKey]);
+            const e = toCanvas(locations[endKey]);
+            ctx.strokeStyle = '#52b788';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([6, 4]);
+            ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(e.x, e.y); ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Overlay shortest and fastest indicators
+            // Shortest: green solid
+            ctx.strokeStyle = '#2ecc71';
+            ctx.lineWidth = 4;
+            ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(e.x, e.y); ctx.stroke();
+
+            // Fastest: purple offset polyline (simple jitter to distinguish)
+            ctx.strokeStyle = '#7e57c2';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            const midx = (s.x + e.x) / 2, midy = (s.y + e.y) / 2;
+            ctx.moveTo(s.x, s.y);
+            ctx.lineTo(midx + 10, midy - 8);
+            ctx.lineTo(e.x, e.y);
+            ctx.stroke();
+
+            // Add legend
+            const legendX = canvas.width - 180, legendY = pad;
+            ctx.fillStyle = '#ffffff';
+            ctx.strokeStyle = '#2d6a4f';
+            ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.rect(legendX, legendY, 160, 80); ctx.fill(); ctx.stroke();
+            ctx.font = '12px sans-serif'; ctx.fillStyle = '#1b4332';
+            ctx.fillText('Legend', legendX + 8, legendY + 16);
+            // Straight baseline
+            ctx.strokeStyle = '#52b788'; ctx.lineWidth = 3; ctx.setLineDash([6,4]);
+            ctx.beginPath(); ctx.moveTo(legendX+10, legendY+30); ctx.lineTo(legendX+60, legendY+30); ctx.stroke(); ctx.setLineDash([]);
+            ctx.fillText('Baseline line', legendX+70, legendY+34);
+            // Shortest
+            ctx.strokeStyle = '#2ecc71'; ctx.lineWidth = 4;
+            ctx.beginPath(); ctx.moveTo(legendX+10, legendY+50); ctx.lineTo(legendX+60, legendY+50); ctx.stroke();
+            ctx.fillText(`Shortest: ${shortest.name}`, legendX+70, legendY+54);
+            // Fastest
+            ctx.strokeStyle = '#7e57c2'; ctx.lineWidth = 3;
+            ctx.beginPath(); ctx.moveTo(legendX+10, legendY+70); ctx.lineTo(legendX+60, legendY+70); ctx.stroke();
+            ctx.fillText(`Fastest: ${fastest.name}`, legendX+70, legendY+74);
         }
     </script>
 </body>
