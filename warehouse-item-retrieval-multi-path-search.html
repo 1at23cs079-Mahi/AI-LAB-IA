@@ -22,13 +22,20 @@
         .btn:hover { background: #f9a825; transform: scale(1.05); }
         .btn-secondary { background: #fff9c4; color: #f57f17; border: 2px solid #f57f17; }
         .output { background: #fafafa; border: 3px solid #f57f17; color: #424242; border-radius: 12px; }
-        .cell { background: white; border: 2px solid #f57f17; color: #424242; display:flex; align-items:center; justify-content:center; border-radius:6px; transition: background 0.2s ease, transform 0.1s ease; }
+        .cell { background: white; border: 2px solid #f57f17; color: #424242; display:flex; align-items:center; justify-content:center; border-radius:8px; transition: background 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease; }
         .cell:hover { transform: translateY(-1px); }
         .visualization { background: white; border: 2px solid #f57f17; border-radius: 12px; padding: 10px; }
+        .grid { display: grid; gap: 6px; padding: 8px; background: linear-gradient(135deg, #fffef5 0%, #fff8e6 100%); border-radius: 12px; }
         .legend { display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; }
         .legend-item { display:flex; align-items:center; gap:6px; background:#fffde7; border:1px dashed #f57f17; padding:6px 10px; border-radius:8px; font-size: 13px; }
         .legend-dot { width:18px; height:18px; border-radius:4px; border:2px solid #f57f17; display:inline-block; }
         .badge { padding:4px 8px; border-radius:12px; font-size:12px; border:1px solid #f57f17; background:#fff3cd; color:#8a6d3b; }
+
+        @keyframes pulse-soft {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(245, 127, 23, 0.25); }
+            70% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(245, 127, 23, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(245, 127, 23, 0); }
+        }
     </style>
     <div class="problem-container">
         <a href="batch-b1.html" class="back-button">← Back to Batch B1</a>
@@ -48,6 +55,7 @@
             </div>
             <button class="btn" onclick="solveAStar()">Solve with A*</button>
             <button class="btn" onclick="solveGreedy()">Solve with Greedy Best-First</button>
+            <button class="btn" onclick="solveDijkstra()">Solve with Dijkstra</button>
             <button class="btn" onclick="compareAlgorithms()">Compare Both</button>
             <button class="btn btn-secondary" onclick="randomizeWarehouse()">🎲 Randomize</button>
             <button class="btn btn-secondary" onclick="resetWarehouse()">Reset</button>
@@ -64,8 +72,10 @@
                 <div class="legend-item"><span class="legend-dot" style="background:#7f8c8d; border-color:#5c6a6b"></span> Obstacle (X)</div>
                 <div class="legend-item"><span class="legend-dot" style="background:#2ecc71; border-color:#1d9c52"></span> A* Path</div>
                 <div class="legend-item"><span class="legend-dot" style="background:#9b59b6; border-color:#6f3f82"></span> Greedy Path</div>
+                <div class="legend-item"><span class="legend-dot" style="background:#1abc9c; border-color:#148f77"></span> Dijkstra Path</div>
                 <div class="legend-item"><span class="legend-dot" style="background:#bbdefb; border-color:#90caf9"></span> A* Explored</div>
                 <div class="legend-item"><span class="legend-dot" style="background:#e1bee7; border-color:#ce93d8"></span> Greedy Explored</div>
+                <div class="legend-item"><span class="legend-dot" style="background:#b2dfdb; border-color:#80cbc4"></span> Dijkstra Explored</div>
             </div>
         </div>
 
@@ -140,21 +150,28 @@
                     
                     if (i === base.x && j === base.y) {
                         cell.style.background = '#3498db';
-                        cell.textContent = 'B';
+                        cell.textContent = '🏠';
+                        cell.style.fontSize = '18px';
                         cell.style.color = 'white';
-                        cell.title = `Base (B) @ (${i},${j})`;
+                        cell.style.boxShadow = '0 6px 14px rgba(52,152,219,0.25)';
+                        cell.style.animation = 'pulse-soft 1.8s infinite ease-in-out';
+                        cell.title = `Base @ (${i},${j})`;
                     } else {
                         const itemIdx = items.findIndex(it => it.x === i && it.y === j);
                         if (itemIdx !== -1) {
                             cell.style.background = '#f39c12';
-                            cell.textContent = (itemIdx + 1).toString();
+                            cell.textContent = '📦';
+                            cell.style.fontSize = '18px';
                             cell.style.color = 'white';
+                            cell.style.boxShadow = '0 6px 14px rgba(243,156,18,0.25)';
+                            cell.style.animation = 'pulse-soft 2.2s infinite ease-in-out';
                             cell.title = `Item ${itemIdx + 1} @ (${i},${j})`;
                         } else if (grid[i][j] === 1) {
                             cell.classList.add('obstacle');
                             cell.textContent = 'X';
                             cell.style.color = 'white';
-                            cell.style.background = '#7f8c8d';
+                            cell.style.background = 'repeating-linear-gradient(45deg, #7f8c8d, #7f8c8d 8px, #8f9a9b 8px, #8f9a9b 16px)';
+                            cell.style.boxShadow = 'inset 0 0 10px rgba(0,0,0,0.1)';
                             cell.title = `Obstacle @ (${i},${j})`;
                         }
                     }
@@ -185,7 +202,7 @@
         }
 
         function findPath(start, goal, heuristic = 'astar') {
-            const pq = [{pos: start, g: 0, h: manhattan(start, goal), path: [start]}];
+            const pq = [{pos: start, g: 0, h: (heuristic === 'dijkstra' ? 0 : manhattan(start, goal)), path: [start]}];
             const visited = new Set();
             const exploredCells = [];
             let nodesExplored = 0;
@@ -193,6 +210,7 @@
             while (pq.length > 0) {
                 pq.sort((a, b) => {
                     if (heuristic === 'greedy') return a.h - b.h;
+                    if (heuristic === 'dijkstra') return a.g - b.g;
                     return (a.g + a.h) - (b.g + b.h);
                 });
                 
@@ -219,7 +237,7 @@
                         pq.push({
                             pos: {x: nx, y: ny},
                             g: current.g + 1,
-                            h: manhattan({x: nx, y: ny}, goal),
+                            h: (heuristic === 'dijkstra' ? 0 : manhattan({x: nx, y: ny}, goal)),
                             path: [...current.path, {x: nx, y: ny}]
                         });
                     }
@@ -261,9 +279,15 @@
             displayResult(result, 'Greedy Best-First');
         }
 
+        function solveDijkstra() {
+            const result = solveMultiGoal('dijkstra');
+            displayResult(result, 'Dijkstra');
+        }
+
         function compareAlgorithms() {
             const astar = solveMultiGoal('astar');
             const greedy = solveMultiGoal('greedy');
+            const dijkstra = solveMultiGoal('dijkstra');
             
             const output = document.getElementById('output');
             const resultContent = document.getElementById('resultContent');
@@ -271,6 +295,19 @@
             
             output.style.display = 'block';
             
+            // Determine overall winner: min cost, tie-breaker by nodes explored
+            const algs = [
+                { name: 'A*', key: 'astar', cost: astar.cost, nodes: astar.nodesExplored },
+                { name: 'Greedy', key: 'greedy', cost: greedy.cost, nodes: greedy.nodesExplored },
+                { name: 'Dijkstra', key: 'dijkstra', cost: dijkstra.cost, nodes: dijkstra.nodesExplored }
+            ];
+            const minCost = Math.min(...algs.map(a => a.cost));
+            const costTies = algs.filter(a => a.cost === minCost);
+            const minNodesAmongTies = Math.min(...costTies.map(a => a.nodes));
+            const winners = algs.filter(a => a.cost === minCost && a.nodes === minNodesAmongTies).map(a => a.key);
+
+            const winnerMark = (key) => winners.includes(key) ? '✓ Winner' : '';
+
             resultContent.innerHTML = `
                 <div class="alert alert-success">
                     ✓ Comparison Complete!
@@ -281,13 +318,19 @@
                         <td>A*</td>
                         <td>${astar.cost}</td>
                         <td>${astar.nodesExplored}</td>
-                        <td>${astar.cost <= greedy.cost ? '✓ Optimal' : ''}</td>
+                        <td>${winnerMark('astar')}</td>
                     </tr>
                     <tr>
                         <td>Greedy Best-First</td>
                         <td>${greedy.cost}</td>
                         <td>${greedy.nodesExplored}</td>
-                        <td>${greedy.cost < astar.cost ? '✓ Faster' : ''}</td>
+                        <td>${winnerMark('greedy')}</td>
+                    </tr>
+                    <tr>
+                        <td>Dijkstra</td>
+                        <td>${dijkstra.cost}</td>
+                        <td>${dijkstra.nodesExplored}</td>
+                        <td>${winnerMark('dijkstra')}</td>
                     </tr>
                 </table>
             `;
@@ -318,11 +361,12 @@
                 <div style="background: #fff3e0; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #f57f17;">
                     <h5 style="color: #424242; margin-top: 0;">💡 Why Different Nodes Explored?</h5>
                     <p style="color: #616161; margin: 8px 0; font-size: 14px;">
-                        <strong style="color: #2ecc71;">A*</strong> uses <strong>g(n) + h(n)</strong> (cost so far + heuristic) - explores more systematically to guarantee optimal path<br>
-                        <strong style="color: #9b59b6;">Greedy</strong> uses <strong>only h(n)</strong> (heuristic to goal) - explores fewer nodes by rushing toward goal, may miss optimal path
+                        <strong style="color: #2ecc71;">A*</strong> uses <strong>g(n) + h(n)</strong> (cost so far + heuristic) — systematic and optimal.<br>
+                        <strong style="color: #9b59b6;">Greedy</strong> uses <strong>only h(n)</strong> (heuristic to goal) — explores fewer nodes, may miss optimal path.<br>
+                        <strong style="color: #1abc9c;">Dijkstra</strong> uses <strong>only g(n)</strong> (cost so far) — no heuristic, often explores many nodes but guarantees optimal path.
                     </p>
                     <p style="color: #616161; margin: 8px 0; font-size: 14px;">
-                        Below: <span style="color: #64b5f6;">Light blue</span> = explored but not in final path, <span style="color: #2ecc71;">Green</span>/<span style="color: #9b59b6;">Purple</span> = final path
+                        Below: <span style="color: #64b5f6;">Light blue</span>/<span style="color: #ab47bc;">Light purple</span>/<span style="color: #26a69a;">Light teal</span> = explored; <span style="color: #2ecc71;">Green</span>/<span style="color: #9b59b6;">Purple</span>/<span style="color: #1abc9c;">Teal</span> = final paths
                     </p>
                 </div>
             `;
@@ -348,22 +392,27 @@
                     
                     if (i === base.x && j === base.y) {
                         cell.style.background = '#3498db';
-                        cell.textContent = 'B';
+                        cell.textContent = '🏠';
+                        cell.style.fontSize = '18px';
                         cell.style.color = 'white';
+                        cell.style.boxShadow = '0 6px 14px rgba(52,152,219,0.25)';
                     } else {
                         const itemIdx = items.findIndex(it => it.x === i && it.y === j);
                         if (itemIdx !== -1) {
                             cell.style.background = '#f39c12';
-                            cell.textContent = (itemIdx + 1).toString();
+                            cell.textContent = '📦';
+                            cell.style.fontSize = '18px';
                             cell.style.color = 'white';
+                            cell.style.boxShadow = '0 6px 14px rgba(243,156,18,0.25)';
                         } else if (grid[i][j] === 1) {
-                            cell.style.background = '#7f8c8d';
+                            cell.style.background = 'repeating-linear-gradient(45deg, #7f8c8d, #7f8c8d 8px, #8f9a9b 8px, #8f9a9b 16px)';
                             cell.textContent = 'X';
                             cell.style.color = 'white';
                         } else if (astarPathSet.has(key)) {
                             cell.style.background = '#2ecc71';
                             cell.textContent = '→';
                             cell.style.color = 'white';
+                            cell.style.boxShadow = '0 0 0 2px rgba(46,204,113,0.35), 0 0 12px rgba(46,204,113,0.6)';
                         } else if (astarExploredSet.has(key) && getShowExplored()) {
                             cell.style.background = '#bbdefb';
                             cell.style.color = '#1976d2';
@@ -397,22 +446,27 @@
                     
                     if (i === base.x && j === base.y) {
                         cell.style.background = '#3498db';
-                        cell.textContent = 'B';
+                        cell.textContent = '🏠';
+                        cell.style.fontSize = '18px';
                         cell.style.color = 'white';
+                        cell.style.boxShadow = '0 6px 14px rgba(52,152,219,0.25)';
                     } else {
                         const itemIdx = items.findIndex(it => it.x === i && it.y === j);
                         if (itemIdx !== -1) {
                             cell.style.background = '#f39c12';
-                            cell.textContent = (itemIdx + 1).toString();
+                            cell.textContent = '📦';
+                            cell.style.fontSize = '18px';
                             cell.style.color = 'white';
+                            cell.style.boxShadow = '0 6px 14px rgba(243,156,18,0.25)';
                         } else if (grid[i][j] === 1) {
-                            cell.style.background = '#7f8c8d';
+                            cell.style.background = 'repeating-linear-gradient(45deg, #7f8c8d, #7f8c8d 8px, #8f9a9b 8px, #8f9a9b 16px)';
                             cell.textContent = 'X';
                             cell.style.color = 'white';
                         } else if (greedyPathSet.has(key)) {
                             cell.style.background = '#9b59b6';
                             cell.textContent = '→';
                             cell.style.color = 'white';
+                            cell.style.boxShadow = '0 0 0 2px rgba(155,89,182,0.35), 0 0 12px rgba(155,89,182,0.6)';
                         } else if (greedyExploredSet.has(key) && getShowExplored()) {
                             cell.style.background = '#e1bee7';
                             cell.style.color = '#7b1fa2';
@@ -425,8 +479,63 @@
             }
             greedyContainer.appendChild(greedyGrid);
             
+            // Dijkstra Grid
+            const dijkContainer = document.createElement('div');
+            dijkContainer.innerHTML = '<h5 style="color: #424242; margin-top: 20px;">Dijkstra Path</h5>';
+            const dijkGrid = document.createElement('div');
+            dijkGrid.className = 'grid';
+            dijkGrid.style.gridTemplateColumns = `repeat(${SIZE}, 1fr)`;
+
+            const dijkPathSet = new Set(dijkstra.path.map(p => `${p.x},${p.y}`));
+            const dijkExploredSet = new Set(dijkstra.exploredCells.map(p => `${p.x},${p.y}`));
+
+            for (let i = 0; i < SIZE; i++) {
+                for (let j = 0; j < SIZE; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    const sz3 = getCellSize();
+                    cell.style.width = `${sz3}px`;
+                    cell.style.height = `${sz3}px`;
+                    const key = `${i},${j}`;
+
+                    if (i === base.x && j === base.y) {
+                        cell.style.background = '#3498db';
+                        cell.textContent = '🏠';
+                        cell.style.fontSize = '18px';
+                        cell.style.color = 'white';
+                        cell.style.boxShadow = '0 6px 14px rgba(52,152,219,0.25)';
+                    } else {
+                        const itemIdx = items.findIndex(it => it.x === i && it.y === j);
+                        if (itemIdx !== -1) {
+                            cell.style.background = '#f39c12';
+                            cell.textContent = '📦';
+                            cell.style.fontSize = '18px';
+                            cell.style.color = 'white';
+                            cell.style.boxShadow = '0 6px 14px rgba(243,156,18,0.25)';
+                        } else if (grid[i][j] === 1) {
+                            cell.style.background = 'repeating-linear-gradient(45deg, #7f8c8d, #7f8c8d 8px, #8f9a9b 8px, #8f9a9b 16px)';
+                            cell.textContent = 'X';
+                            cell.style.color = 'white';
+                        } else if (dijkPathSet.has(key)) {
+                            cell.style.background = '#1abc9c';
+                            cell.textContent = '→';
+                            cell.style.color = 'white';
+                            cell.style.boxShadow = '0 0 0 2px rgba(26,188,156,0.35), 0 0 12px rgba(26,188,156,0.6)';
+                        } else if (dijkExploredSet.has(key) && getShowExplored()) {
+                            cell.style.background = '#b2dfdb';
+                            cell.style.color = '#00695c';
+                            cell.style.fontSize = '10px';
+                            cell.textContent = '·';
+                        }
+                    }
+                    dijkGrid.appendChild(cell);
+                }
+            }
+            dijkContainer.appendChild(dijkGrid);
+
             solutionGrid.appendChild(astarContainer);
             solutionGrid.appendChild(greedyContainer);
+            solutionGrid.appendChild(dijkContainer);
         }
 
         function displayResult(result, alg) {
@@ -485,32 +594,47 @@
                     
                     if (i === base.x && j === base.y) {
                         cell.style.background = '#3498db';
-                        cell.textContent = 'B';
+                        cell.textContent = '🏠';
+                        cell.style.fontSize = '18px';
                         cell.style.color = 'white';
-                        cell.style.fontWeight = 'bold';
+                        cell.style.boxShadow = '0 6px 14px rgba(52,152,219,0.25)';
                     } else {
                         const itemIdx = items.findIndex(it => it.x === i && it.y === j);
                         if (itemIdx !== -1) {
                             cell.style.background = '#f39c12';
-                            cell.textContent = (itemIdx + 1).toString();
+                            cell.textContent = '📦';
+                            cell.style.fontSize = '18px';
                             cell.style.color = 'white';
-                            cell.style.fontWeight = 'bold';
+                            cell.style.boxShadow = '0 6px 14px rgba(243,156,18,0.25)';
                         } else if (grid[i][j] === 1) {
-                            cell.style.background = '#7f8c8d';
+                            cell.style.background = 'repeating-linear-gradient(45deg, #7f8c8d, #7f8c8d 8px, #8f9a9b 8px, #8f9a9b 16px)';
                             cell.textContent = 'X';
                             cell.style.color = 'white';
+                            cell.style.boxShadow = 'inset 0 0 10px rgba(0,0,0,0.1)';
                         } else if (pathSet.has(key)) {
                             if (animate) {
                                 // Defer painting; collect for animation
                                 pathCells.push({i, j});
                             } else {
-                                cell.style.background = alg === 'A*' ? '#2ecc71' : '#9b59b6';
+                                const isAstar = (alg === 'A*') || alg.includes('A*');
+                                const isGreedy = alg.toLowerCase().includes('greedy');
+                                const isDijkstra = alg.toLowerCase().includes('dijkstra');
+                                const color = isAstar ? '#2ecc71' : (isGreedy ? '#9b59b6' : '#1abc9c');
+                                cell.style.background = color;
                                 cell.textContent = '→';
                                 cell.style.color = 'white';
+                                cell.style.boxShadow = isAstar
+                                    ? '0 0 0 2px rgba(46,204,113,0.35), 0 0 12px rgba(46,204,113,0.6)'
+                                    : (isGreedy
+                                        ? '0 0 0 2px rgba(155,89,182,0.35), 0 0 12px rgba(155,89,182,0.6)'
+                                        : '0 0 0 2px rgba(26,188,156,0.35), 0 0 12px rgba(26,188,156,0.6)');
                             }
                         } else if (exploredSet.has(key) && showExplored) {
-                            cell.style.background = alg === 'A*' ? '#bbdefb' : '#e1bee7';
-                            cell.style.color = alg === 'A*' ? '#1976d2' : '#7b1fa2';
+                            const isAstar = (alg === 'A*') || alg.includes('A*');
+                            const isGreedy = alg.toLowerCase().includes('greedy');
+                            const isDijkstra = alg.toLowerCase().includes('dijkstra');
+                            cell.style.background = isAstar ? '#bbdefb' : (isGreedy ? '#e1bee7' : '#b2dfdb');
+                            cell.style.color = isAstar ? '#1976d2' : (isGreedy ? '#7b1fa2' : '#00695c');
                             cell.style.fontSize = '10px';
                             cell.textContent = '·';
                         }
@@ -526,7 +650,10 @@
             // Animate path if enabled
             if (animate && pathCells.length > 0) {
                 const speed = getSpeed();
-                const color = alg === 'A*' ? '#2ecc71' : '#9b59b6';
+                const isAstar = (alg === 'A*') || alg.includes('A*');
+                const isGreedy = alg.toLowerCase().includes('greedy');
+                const isDijkstra = alg.toLowerCase().includes('dijkstra');
+                const color = isAstar ? '#2ecc71' : (isGreedy ? '#9b59b6' : '#1abc9c');
                 const cells = Array.from(gridDiv.children);
                 const indexOf = (i, j) => i * SIZE + j;
                 result.path.forEach((p, idx) => {
@@ -536,6 +663,11 @@
                         el.style.background = color;
                         el.style.color = 'white';
                         el.textContent = '→';
+                        el.style.boxShadow = isAstar
+                            ? '0 0 0 2px rgba(46,204,113,0.35), 0 0 12px rgba(46,204,113,0.6)'
+                            : (isGreedy
+                                ? '0 0 0 2px rgba(155,89,182,0.35), 0 0 12px rgba(155,89,182,0.6)'
+                                : '0 0 0 2px rgba(26,188,156,0.35), 0 0 12px rgba(26,188,156,0.6)');
                     }, speed * idx);
                 });
             }
