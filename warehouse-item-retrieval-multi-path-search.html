@@ -295,25 +295,23 @@
             
             output.style.display = 'block';
             
-            // Determine overall winner: min cost, tie-breaker by nodes explored
+            // Determine overall winner: MOST nodes explored wins (as requested)
             const algs = [
                 { name: 'A*', key: 'astar', cost: astar.cost, nodes: astar.nodesExplored },
                 { name: 'Greedy', key: 'greedy', cost: greedy.cost, nodes: greedy.nodesExplored },
                 { name: 'Dijkstra', key: 'dijkstra', cost: dijkstra.cost, nodes: dijkstra.nodesExplored }
             ];
-            const minCost = Math.min(...algs.map(a => a.cost));
-            const costTies = algs.filter(a => a.cost === minCost);
-            const minNodesAmongTies = Math.min(...costTies.map(a => a.nodes));
-            const winners = algs.filter(a => a.cost === minCost && a.nodes === minNodesAmongTies).map(a => a.key);
+            const maxNodes = Math.max(...algs.map(a => a.nodes));
+            const winners = algs.filter(a => a.nodes === maxNodes).map(a => a.key);
 
-            const winnerMark = (key) => winners.includes(key) ? '✓ Winner' : '';
+            const winnerMark = (key) => winners.includes(key) ? '✓ Winner (most nodes)' : '';
 
             resultContent.innerHTML = `
                 <div class="alert alert-success">
                     ✓ Comparison Complete!
                 </div>
                 <table>
-                    <tr><th>Algorithm</th><th>Path Cost</th><th>Nodes Explored</th><th>Winner</th></tr>
+                    <tr><th>Algorithm</th><th>Path Cost</th><th>Nodes Explored</th><th>Winner (most nodes)</th></tr>
                     <tr>
                         <td>A*</td>
                         <td>${astar.cost}</td>
